@@ -1,0 +1,85 @@
+# ---- data ----
+data:
+  raw_dir: data/raw
+  positions: data/positions.parquet
+  selected: data/selected.parquet
+  depth_traj: data/depth_traj.parquet
+  maia_q: data/maia_q.parquet
+  train_tensor: data/train.pt
+  lichess_month: "2025-09"   # latest month mirrored on the HF dataset (raw site has newer)
+  # primary source: official Lichess parquet on HuggingFace (fast, no database.lichess.org throttle).
+  # movetext keeps inline [%clk]/[%eval]; ~62 shards/month of ~1.4M games each.
+  hf_repo: "Lichess/standard-chess-games"
+  hf_shards: 2               # how many month shards to pull (each ~1GB / ~1.4M games)
+  sample_seed: 17
+  # sampling targets: games per (elo_bin x time_class)
+  elo_bins: [1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600]
+  time_classes: ["bullet", "blitz", "rapid", "classical"]
+  games_per_cell: 300       # first real run; rare cells (hi-Elo classical) fill below this
+  min_ply: 9        # skip opening book churn before move 9
+  max_ply: 120
+
+# ---- engine ----
+engine:
+  path: "~/projects/stockfish_chess/engine/stockfish"            # your self-built SF18 binary
+  net: "nn-71d6d32cb962.nnue"      # nn-xxxxxxxx.nnue, for the methods section
+  threads: 1                # 1 per process: max aggregate throughput over independent positions
+  hash_mb: 256              # PER WORKER; total RAM = workers * hash_mb
+  depth: 21                 # D (was 22; reduced for engine-cost)
+  multipv: 9                # K (was 16; main cost lever). Played moves outside the top-K at
+                            # every depth are treated as no better than the worst kept move
+                            # (see build_dataset.py); we no longer re-query them individually.
+  show_wdl: true
+  shared_net: true          # use SF18 shared-memory NNUE across processes
+  max_nodes: 200000000      # per-position safety cap: stop at depth OR this many nodes,
+                            # whichever first. Calibrated 2026-06-04: legit positions reach
+                            # depth 21 by <=69M nodes (p99 41M); a minority (quiet endgames)
+                            # never converge and need >300M nodes for even one ply past d16,
+                            # trapping a worker for hours. 200M (~3x legit max) lets real
+                            # positions finish d21 while capping pathological ones to ~1-2min.
+                            # Capped positions have max(depth)<21 and are flagged in build_dataset.
+                            # 0 = no cap (old behaviour).
+
+# ---- parallel engine driver (run_engine.py) ----
+# 2x AMD EPYC 9335 (64 physical cores, SMT->128 logical). Pin 1 SF process per core,
+# NUMA-bind cpu+mem per node. Start at 64 (physical); benchmark 96/128 before scaling.
+parallel:
+  workers: 128              # SMT: ~1.22x over 64 on this box (NNUE is memory-bound); engine dedicated
+  numa:
+    enabled: true
+    node0_cpus: "0-31,64-95"
+    node1_cpus: "32-63,96-127"
+  dedup_fen: true           # analyse each unique position once
+  shard_dir: data/shards
+
+# ---- maia (state tower) ----
+maia:
+  model: "maia3-79m"        # use maia3-5m for fast dev
+  device: "cuda"            # or cpu
+  use_uci_history: true
+
+# ---- selection (two-stage cost saver) ----
+select:
+  # keep a decision if the shallow eval suggests a non-trivial choice,
+  # i.e. several moves within `winprob_margin` and not a single forced reply
+  winprob_margin: 0.10
+  min_candidates: 2
+  keep_all_swing_down: true
+
+# ---- model ----
+model:
+  depth_grid: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+  context_dim: 8            # elo, time-class one-hot, clock, ply, total-swing, ...
+  hidden: 128
+  entropy_reg: 0.01         # on pi, for identifiability
+  lr: 0.003
+  batch_size: 512
+  epochs: 30
+  val_frac: 0.15
+  split_by: "player"        # prevent leakage
+
+# ---- synthetic validation ----
+synthetic:
+  planted_depths: [4, 6, 8, 10, 12, 14, 16]
+  games_per_depth: 200
+  softmax_beta_gen: 6.0

@@ -1,0 +1,230 @@
+\documentclass[11pt]{article}
+% Draft for Nature Human Behaviour. Swap to the NHB / Springer Nature class at submission;
+% NHB uses unstructured abstract (~150 words), main text ~5000 words, Methods after Discussion.
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage[round]{natbib}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\newcommand{\todo}[1]{\textcolor{red}{[#1]}}
+
+\title{\textbf{Errors reveal the depth of human reasoning}\\[2pt]
+\large Measuring depth of deliberation from the structure of mistakes\\ in millions of real decisions}
+\author{Tamal T. Biswas \and Kenneth W. Regan}
+\date{}
+
+\begin{document}
+\maketitle
+
+\paragraph{Draft note.}\textit{Methods are final; Results are written as a pre-registered
+analysis plan. Quantities to fill after the runs are marked} \todo{like this}.
+
+\begin{abstract}
+\noindent How deeply a person deliberates before deciding is central to theories of
+bounded rationality, yet it is rarely measurable in natural behaviour. Here we show that
+the depth of human reasoning can be read directly from the structure of the mistakes people
+make. We use competitive chess as a natural laboratory in which millions of real,
+skill-graded decisions are scored against an authoritative standard at progressively deeper
+levels of analysis. Players of different skill differ little on the moves they get right but
+are sharply separated by the depth at which their errors are exposed: stronger players are
+misled only by deeper traps, a quantity we term the \emph{depth of satisficing}. This depth
+rises smoothly with skill, collapses under time pressure, and differs across phases of play,
+and it can be estimated for an individual to yield an interpretable cognitive profile. A
+predictive model incorporating inferred depth substantially outperforms a state-of-the-art
+behavioural model on slow, deliberative play---where deep reasoning matters most---while
+adding little where decisions are fast. These results indicate that people commit to the
+best option found at the depth of search they reach, and that what someone gets wrong, more
+than what they get right, reveals how they think.
+\end{abstract}
+
+\section{Introduction}
+A long tradition in the decision sciences holds that people do not optimise but
+\emph{satisfice}: they search through options until one crosses an acceptability threshold,
+then stop and choose \citep{simon1956}. Allied ideas---bounded rationality, level-$k$
+reasoning, and the contrast between fast intuitive and slow deliberative thought
+\citep{kahneman1979,stahl1995}---all turn on a hidden quantity: how far a decision maker
+looks before committing. That quantity has been inferred almost exclusively from small
+staged experiments in artificial settings. Whether the regularities found there govern real,
+repeated, high-stakes choice is hard to test, because natural decisions rarely come with a
+ground-truth measure of how good each option was, let alone how good it \emph{looked} at
+successive depths of consideration.
+
+Chess supplies exactly this. Millions of decisions by players of precisely known skill are
+recorded in real competition, and each can be scored against an engine far stronger than any
+human---at every depth of an iterative-deepening search. The engine's evaluation of a move
+\emph{changes with depth}: a move that looks strong shallow may be refuted only deeper, and a
+move that looks weak at first may reveal its worth later. This depth-resolved record lets us
+ask, of every human mistake, \emph{at what depth the flaw becomes visible}, and therefore how
+deep the player must have looked.
+
+Our central construct is the \textbf{depth of satisficing}: the depth at which the move a
+player chose stops looking better than the move they should have chosen. We show that this is
+the dimension along which skill is most legible. Players of widely different ratings are
+nearly indistinguishable on decisions they get right; the information separating them is
+concentrated in the small fraction of moves on which they err, and specifically in the depth
+at which those errors surface.
+
+We make three advances over prior chess-error and engine-depth work
+\citep{regan2011,biswas2015,mcilroyyoung2020}. First, we replace descriptive curve-fitting
+with a generative model in which the player is a latent distribution over search depths, so
+depth of satisficing is a posterior quantity with stated uncertainty. Second, we validate
+that engine depth is a meaningful proxy for human reasoning depth in three independent
+ways---predictive, convergent, and differential---rather than assuming it. Third, we use
+inferred depth to build interpretable individual profiles and to predict held-out human
+moves, outperforming a strong state-only behavioural model precisely where theory says deep
+reasoning should matter, but not elsewhere; this is notable given that strong searchless
+models exist \citep{ruoss2024}.
+
+\section{Results}
+\paragraph{Skill lives in the errors, not the successes.} Across \todo{N} decisions spanning
+ratings 1200--2600+ under classical time controls, the average error of the played move and
+of the engine's preferred move are nearly indistinguishable at shallow depth and diverge only
+as depth increases (Fig.~\ref{fig:f1}). On outright blunders skill is weakly informative; on
+``swing-down'' decisions---played move good shallow, overtaken later---skill is strongly
+informative, carrying \todo{X}$\times$ the rating information per decision of the remaining
+moves.
+
+\paragraph{Depth of satisficing rises with skill and collapses under time pressure.} The
+posterior depth of satisficing increases monotonically with rating
+(\todo{$d\approx$} at the lowest band to \todo{$d\approx$} at the highest), with
+non-overlapping 95\% credible intervals (Fig.~\ref{fig:f2}a). Within players, it falls by
+\todo{$\Delta d\approx$} plies on moves played under time pressure (Fig.~\ref{fig:f2}b), at
+every rating level---a within-subject effect the staged literature can only approximate.
+
+\paragraph{Inferred depth tracks real thinking time.} Inferred depth, fit without clock data,
+correlates with the actual time spent on the move (Spearman $\rho=$\todo{..}, held out;
+Fig.~\ref{fig:f3}), strongest in the middlegame---convergent evidence that the construct
+reflects deliberation.
+
+\paragraph{A depth-aware model predicts human moves better, only where depth should matter.}
+A fusion of a state-only model (Maia-3) and a search-only mixture-over-depths model improves
+held-out cross-entropy by \todo{$\Delta$ nats} and top-1 match by \todo{$\Delta$\%}. The gain
+is differential and pre-registered: large on high-swing positions and classical play, near
+zero on low-swing positions and blitz (Fig.~\ref{fig:f4}; interaction \todo{$\beta$,
+$p=$}). A state-only model cannot produce this pattern.
+
+\paragraph{Individual profiles separate expert styles.} A four-component profile (depth of
+satisficing, trap-susceptibility, deep-discovery rate, time-elasticity) recovers rating by
+nested cross-validation (held-out $R^2=$\todo{..}) without per-phase rescaling, and resolves
+a known difficulty: a one-dimensional score misranks two world champions, whereas the
+profile attributes their strength to different axes and no longer inverts their ratings
+(Fig.~\ref{fig:f5}).
+
+\paragraph{The instrument recovers known depth.} On agents that satisfice at fixed, known
+depths, the model recovers each planted depth (mean absolute error \todo{..} plies;
+Fig.~\ref{fig:f6}), confirming it measures depth rather than position difficulty.
+
+\section{Discussion}
+The errors people make are usually treated as noise. We find the opposite: where success is
+widely shared, error carries the informative variation, and its fine structure---the depth at
+which a flaw becomes visible---is a measurable signature of how a person reasons. Depth of
+satisficing scales with expertise, contracts under time pressure, and powers prediction
+exactly in the slow regime where depth can vary. This supports the view that people commit to
+the best option found at the plateau of search they reach rather than integrating across the
+whole trajectory, consistent with level-$k$ choices being largely independent of higher-order
+belief tails \citep{strzalecki2014}. The approach generalises to any domain with skill-graded
+decisions and a depth-resolved value standard; we demonstrate one transfer (Methods). A
+constructive corollary: an agent that estimates a person's depth of satisficing could tailor
+problems just beyond it. \emph{Limitations:} engine depth is a proxy for human selective
+search, validated but not isomorphic; chess is adversarial and highly trained, so the
+generality claim rests on the transfer experiments.
+
+\section{Methods}
+\paragraph{Data.} Current online games from the Lichess open database, sampled across
+rating bands (200-point bins, 1200--2600+) and time classes (bullet/blitz = fast,
+rapid/classical = slow), with per-move clock times retained. An elite subset (world
+champions) supports the profile case study. Synthetic agents (below) provide ground truth.
+
+\paragraph{Engine analysis and value scaling.} Positions are analysed with Stockfish~18 in
+Multi-PV mode, recording each candidate move $m_i$'s evaluation $v_{i,d}$ at every depth
+$d=1\ldots D$ ($D{=}21$, $K{=}9$). The candidate set is the union of top-$K$ across all
+depths so trap moves keep a full trajectory. Because consecutive plies of each game are
+analysed, the value of a played move lying outside the top-$K$ is read off from the position
+it leads to---the next sampled decision---rather than re-searched separately: its win
+probability at depth $d$ equals one minus the successor's best win probability at depth
+$d{-}1$ (a half-move shallower, matching the other candidates' negamax depth). On the rare
+occasions when no analysed successor exists (game end or the final sampled ply) the played
+move is assigned the weakest retained candidate's win probability at each depth. With \texttt{UCI\_ShowWDL} the engine reports win/draw/loss counts $(w,\mathrm{dr},\ell)$ in
+per-mille, so the win probability $P_{i,d}=(w+\tfrac12\,\mathrm{dr})/1000$ is read off per
+move per depth---no logistic fit. Depth-$d$ regret is
+\begin{equation}
+\delta_{i,d}=\max_j P_{j,d}-P_{i,d}\;\ge\;0 .
+\end{equation}
+
+\paragraph{State-tower features.} The human-pattern prior $q_i(p,c)$ is the Maia-3 policy at
+the side-to-move's rating, read from the policy head as a full distribution over legal moves.
+
+\paragraph{Latent-depth choice model.} A player who has effectively searched to depth $d$
+chooses by a soft-max over depth-$d$ regret fused with the pattern prior as a product of
+experts,
+\begin{equation}
+P(\text{move}{=}i \mid d,p,c)=
+\frac{\exp(-\beta\,\delta_{i,d}+\alpha\,\log q_i)}
+     {\sum_j \exp(-\beta\,\delta_{j,d}+\alpha\,\log q_j)} .
+\end{equation}
+Effective depth is latent with distribution $\pi_d(p,c)=P(\text{searched to }d\mid p,c)$,
+emitted by a network over a coarse depth grid conditioned on context $c$ (rating, time class,
+clock, move number, total swing). The move likelihood marginalises depth,
+\begin{equation}
+P(\text{move}{=}i\mid p,c)=\sum_d \pi_d(p,c)\,P(\text{move}{=}i\mid d,p,c).
+\end{equation}
+Parameters are fit by minimising the negative log-likelihood of the played move $y$,
+$\mathcal{L}=-\log\sum_d \pi_d P(y\mid d)$, with an entropy penalty on $\pi$ for
+identifiability and $\beta$ tied globally; data are split by player.
+
+\paragraph{Depth of satisficing.} The posterior over effective depth given the observed move,
+\begin{equation}
+r_d=P(d\mid y,p,c)=\frac{\pi_d\,P(y\mid d)}{\sum_{d'}\pi_{d'}P(y\mid d')},
+\qquad \hat d=\sum_d d\,r_d ,
+\end{equation}
+gives a per-decision depth with uncertainty; player/condition estimates use a hierarchical
+model with players as random effects and bootstrap/posterior credible intervals.
+
+\paragraph{Profiles and rating recovery.} Per player: mean $\hat d$, trap-susceptibility
+(swing-down rate weighted by pre-refutation attractiveness), deep-discovery rate, and
+time-elasticity (slope of $\hat d$ vs.\ clock). Rating is predicted from the profile by ridge
+regression under nested cross-validation. The champion comparison reports components
+separately.
+
+\paragraph{Model comparison and the differential test.} State-only (Maia-3), search-only, and
+fusion predictors are compared on held-out cross-entropy and top-1/3 match. The pre-registered
+hypothesis is an interaction: the fusion's gain over state-only is larger for classical than
+blitz and for high-swing than low-swing strata, tested in a mixed-effects model with players
+and positions as random effects.
+
+\paragraph{Convergent and recovery validation.} Convergent: correlate per-decision $\hat d$
+(fit without clocks) with observed time-on-move, held out, by phase. Recovery: agents that
+play a soft-max over fixed-depth-$d_{\text{plant}}$ evaluations generate games; the pipeline's
+$\hat d$ is compared to $d_{\text{plant}}$.
+
+\paragraph{Generality transfer.} The estimation is repeated in Go using a depth-resolved value
+network in place of the chess engine, testing whether depth of satisficing again rises with
+rank.
+
+\paragraph{Reproducibility.} Stockfish~18 (net \texttt{nn-71d6d32cb962.nnue}), Threads~1,
+Hash $256$\,MB, $D{=}21$, $K{=}9$ (positions analysed independently across many single-thread
+processes); Maia-3 \texttt{maia3-79m} (commit \texttt{1e13597}); Lichess month \texttt{2025-09};
+sampling seed $17$. Strata and the primary interaction are registered before
+held-out evaluation.
+
+\begin{figure}[h]\centering\framebox[0.6\linewidth]{\rule{0pt}{2cm}}
+\caption{Average error of played vs.\ engine move across depth, by rating and swing class.}
+\label{fig:f1}\end{figure}
+\begin{figure}[h]\centering\framebox[0.6\linewidth]{\rule{0pt}{2cm}}
+\caption{(a) Depth of satisficing vs.\ rating with CIs. (b) Within-player collapse under time pressure.}
+\label{fig:f2}\end{figure}
+\begin{figure}[h]\centering\framebox[0.6\linewidth]{\rule{0pt}{2cm}}
+\caption{Inferred depth vs.\ observed time-on-move.}\label{fig:f3}\end{figure}
+\begin{figure}[h]\centering\framebox[0.6\linewidth]{\rule{0pt}{2cm}}
+\caption{Held-out prediction gain of fusion over state-only, by time control $\times$ swing.}
+\label{fig:f4}\end{figure}
+\begin{figure}[h]\centering\framebox[0.6\linewidth]{\rule{0pt}{2cm}}
+\caption{Champion profiles: multi-axis decomposition and rating recovery without inversion.}
+\label{fig:f5}\end{figure}
+\begin{figure}[h]\centering\framebox[0.6\linewidth]{\rule{0pt}{2cm}}
+\caption{Synthetic-agent recovery: estimated vs.\ planted depth.}\label{fig:f6}\end{figure}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+\end{document}

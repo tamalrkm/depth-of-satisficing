@@ -411,8 +411,114 @@ def e6(cfg, syn_cfg_path="config_syn.yaml"):
     print(f"E6 -> {p}")
 
 
+def _ridge_cv(X, t, dims, seed=0, lams=(0.1, 1, 3, 10, 30, 100)):
+    """Nested-CV ridge: outer 5-fold R^2, inner 5-fold to pick lambda. X standardised inside.
+    `dims` selects feature columns. Closed-form ridge, numpy only."""
+    rng = np.random.default_rng(seed)
+    n = len(t); idx = rng.permutation(n); folds = np.array_split(idx, 5)
+    Xd = X[:, dims]
+    preds = np.full(n, np.nan)
+    for k in range(5):
+        te = folds[k]; trn = np.concatenate([folds[j] for j in range(5) if j != k])
+        # inner CV to pick lambda
+        best_l, best_e = lams[0], 1e9
+        inf = np.array_split(rng.permutation(trn), 5)
+        for lam in lams:
+            err = 0
+            for j in range(5):
+                ite = inf[j]; itr = np.concatenate([inf[m] for m in range(5) if m != j])
+                mu = Xd[itr].mean(0); sd = Xd[itr].std(0) + 1e-9
+                A = (Xd[itr] - mu) / sd; b = t[itr] - t[itr].mean()
+                w = np.linalg.solve(A.T @ A + lam * np.eye(A.shape[1]), A.T @ b)
+                p = ((Xd[ite] - mu) / sd) @ w + t[itr].mean()
+                err += ((p - t[ite]) ** 2).sum()
+            if err < best_e:
+                best_e, best_l = err, lam
+        mu = Xd[trn].mean(0); sd = Xd[trn].std(0) + 1e-9
+        A = (Xd[trn] - mu) / sd; b = t[trn] - t[trn].mean()
+        w = np.linalg.solve(A.T @ A + best_l * np.eye(A.shape[1]), A.T @ b)
+        preds[te] = ((Xd[te] - mu) / sd) @ w + t[trn].mean()
+    return 1 - ((preds - t) ** 2).sum() / ((t - t.mean()) ** 2).sum()
+
+
+def e5(cfg, min_dec=100):
+    """Fig5: per-player 4-axis profile -> rating recovery (1-D depth vs full profile, nested CV)
+    + elite case study. Depth axis uses an ELO-FREE model (elo zeroed) so recovering rating is
+    not circular; trap/discovery axes are observable behaviour."""
+    os.makedirs(FIGDIR, exist_ok=True)
+    mc = cfg["model"]; dev = "cuda" if torch.cuda.is_available() else "cpu"
+    blob, delta, logq, mask, dmask, ctx, y = load(cfg)
+    meta = blob["meta"]
+    players = np.array(meta["player"]); elo = np.array(meta["elo"]); src = np.array(meta["source"])
+    swl = np.array(meta["swing"])                     # 'up'/'down'
+    ctx2 = ctx.clone(); ctx2[:, 0] = 0.0              # zero ELO (keep clock -> time-elasticity works)
+    tr, _ = player_split(players, mc["val_frac"], cfg["data"]["sample_seed"])
+    print("E5: fitting elo-free depth model...")
+    model = fit(mc, dev, delta, logq, mask, dmask, ctx2, y, tr)
+    dh = dhat_over(model, dev, delta, logq, mask, dmask, ctx2, y, np.arange(len(y)))
+
+    pr = delta[np.arange(len(y)), y].numpy()
+    shallow_attr = 1.0 - pr[:, 0]                     # how good the played move looked shallow
+    is_down = swl == "down"; is_up = swl == "up"
+    tt = pd.read_parquet(cfg["data"]["selected"], columns=["pos_id", "time_spent"]).set_index("pos_id")
+    tspent = tt.reindex(np.array(meta["pos_id"]))["time_spent"].to_numpy()
+    ltime = np.log(np.clip(tspent, 1, None))
+
+    rows = []
+    for p in np.unique(players):
+        m = players == p
+        if m.sum() < min_dec:
+            continue
+        depth = dh[m].mean()
+        trap = (is_down[m] * shallow_attr[m]).mean()          # falls for attractive traps
+        disc = is_up[m].mean()                                # finds deep-value moves
+        xm, ym = ltime[m], dh[m]
+        ok = np.isfinite(xm) & np.isfinite(ym)
+        telas = 0.0
+        if ok.sum() > 20 and np.std(xm[ok]) > 1e-6:        # guard constant/degenerate think-time
+            xc = xm[ok] - xm[ok].mean(); yc = ym[ok] - ym[ok].mean()
+            telas = float((xc @ yc) / (xc @ xc))           # OLS slope, no SVD
+        rows.append((p, elo[m].mean(), src[m][0] == "broadcast", depth, trap, disc, telas, m.sum()))
+    P = pd.DataFrame(rows, columns=["player", "rating", "elite", "depth", "trap", "disc", "telas", "n"])
+    print(f"E5: {len(P)} players with >={min_dec} decisions ({P.elite.sum()} elite)")
+
+    feats = ["depth", "trap", "disc", "telas"]
+    X = P[feats].to_numpy(); t = P["rating"].to_numpy()
+    r2_1d = _ridge_cv(X, t, [0])                              # depth only
+    r2_full = _ridge_cv(X, t, [0, 1, 2, 3])                   # full profile
+    print(f"   rating recovery (nested-CV R^2): 1-D depth={r2_1d:.3f}  |  4-axis profile={r2_full:.3f}")
+
+    # elite case study: top players by #decisions
+    el = P[P.elite].sort_values("n", ascending=False).head(6).copy()
+    z = {f: (P[f].mean(), P[f].std() + 1e-9) for f in feats}
+    print("\n   elite profiles (z-scored vs population):")
+    print("   " + "player".ljust(24) + "rating  " + "  ".join(f"{f:>6s}" for f in feats))
+    for _, r in el.iterrows():
+        zz = "  ".join(f"{(r[f]-z[f][0])/z[f][1]:>6.2f}" for f in feats)
+        print(f"   {r['player'][:23].ljust(24)}{int(r['rating']):>5d}   {zz}")
+    # 1-D (depth) ranking vs true-rating ranking among the elite (misranking demo)
+    el_d = el.sort_values("depth", ascending=False)["player"].tolist()
+    el_r = el.sort_values("rating", ascending=False)["player"].tolist()
+    disc_pairs = sum(1 for i in range(len(el_r)) for j in range(i+1, len(el_r))
+                     if el_d.index(el_r[i]) > el_d.index(el_r[j]))
+    print(f"   1-D depth-score vs true-rating order: {disc_pairs} discordant pairs / {len(el_r)*(len(el_r)-1)//2}")
+
+    # Fig5: z-scored radar-ish bar profiles for the elite
+    fig, ax = plt.subplots(figsize=(8, 4.2))
+    w = 0.13
+    for i, (_, r) in enumerate(el.iterrows()):
+        ax.bar(np.arange(len(feats)) + i*w, [(r[f]-z[f][0])/z[f][1] for f in feats],
+               w, label=f"{r['player'][:16]} ({int(r['rating'])})")
+    ax.set_xticks(np.arange(len(feats)) + 2.5*w); ax.set_xticklabels(feats)
+    ax.axhline(0, color="grey", lw=.7); ax.set_ylabel("z vs population")
+    ax.set_title(f"E5 elite profiles (rating R^2: 1-D={r2_1d:.2f}, profile={r2_full:.2f})")
+    ax.legend(fontsize=6, ncol=2); fig.tight_layout()
+    p = f"{FIGDIR}/fig5_player_profiles.png"; fig.savefig(p, dpi=150)
+    print(f"E5 -> {p}")
+
+
 def main(cfg, result):
-    runners = {"e1": e1, "e2": e2, "e3": e3, "e4": e4, "e6": e6}
+    runners = {"e1": e1, "e2": e2, "e3": e3, "e4": e4, "e5": e5, "e6": e6}
     todo = list(runners) if result == "all" else [result]
     for r in todo:
         if r not in runners:

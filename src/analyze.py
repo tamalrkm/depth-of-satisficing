@@ -189,6 +189,34 @@ def e4(cfg):
     print(f"  swing-magnitude x TC interaction: {inter:+.4f}  95% CI [{bc[0]:+.4f}, {bc[1]:+.4f}]  "
           f"{'(excludes 0)' if bc[0] > 0 else '(includes 0)'}")
 
+    # --- registered test: linear mixed-effects with player random intercept ---
+    # gain ~ classical * high_swing, (1 | player). Interaction = the pre-registered effect.
+    import statsmodels.formula.api as smf
+    dfm = pd.DataFrame({"gain": d_gap, "classical": (tc == "classical").astype(int),
+                        "highswing": hi.astype(int), "player": vpl})
+    try:
+        mfit = smf.mixedlm("gain ~ classical * highswing", dfm, groups=dfm["player"]).fit()
+        co = mfit.params.get("classical:highswing"); pv = mfit.pvalues.get("classical:highswing")
+        print(f"\nmixed-effects (gain ~ classical*highswing + 1|player):")
+        print(f"  interaction coef = {co:+.4f}  p = {pv:.2e}")
+    except Exception as e:
+        print(f"\nmixed-effects fit failed: {e}")
+
+    # --- Fig4: gain by time control x swing magnitude ---
+    fig, ax = plt.subplots(figsize=(6, 4.2))
+    tcs = ["classical", "rapid", "blitz", "bullet"]
+    himeans = [d_gap[(tc == t) & hi].mean() for t in tcs]
+    lomeans = [d_gap[(tc == t) & ~hi].mean() for t in tcs]
+    xx = np.arange(len(tcs))
+    ax.bar(xx - 0.2, himeans, 0.38, label="high-swing", color="navy")
+    ax.bar(xx + 0.2, lomeans, 0.38, label="low-swing", color="silver")
+    ax.axhline(0, color="grey", lw=.7); ax.set_xticks(xx); ax.set_xticklabels(tcs)
+    ax.set_ylabel("held-out NLL gain, fusion - Maia (nats)")
+    ax.set_title("E4: depth helps only in slow, high-swing play")
+    ax.legend(); ax.grid(alpha=.3, axis="y")
+    fig.tight_layout(); p = f"{FIGDIR}/fig4_prediction_gain.png"; fig.savefig(p, dpi=150)
+    print(f"E4 -> {p}")
+
 
 @torch.no_grad()
 def dhat_over(model, dev, delta, logq, mask, dmask, ctx, y, idx):
@@ -449,8 +477,25 @@ def e5(cfg, min_dec=100):
     mc = cfg["model"]; dev = "cuda" if torch.cuda.is_available() else "cpu"
     blob, delta, logq, mask, dmask, ctx, y = load(cfg)
     meta = blob["meta"]
-    players = np.array(meta["player"]); elo = np.array(meta["elo"]); src = np.array(meta["source"])
+    raw_players = np.array(meta["player"]); elo = np.array(meta["elo"]); src = np.array(meta["source"])
     swl = np.array(meta["swing"])                     # 'up'/'down'
+
+    # Broadcast PGN names are fragmented ("Carlsen, Magnus" / "Magnus Carlsen" / "Carlsen Magnus
+    # (NOR)" / "LevonAronian"...). Canonicalise elite identities to one key: drop federation tags
+    # and punctuation, then use the sorted set of name tokens of length>=2 (order-invariant, so
+    # "Last, First" == "First Last"). Online players keep their unique Lichess username.
+    import re
+    def _canon(name, source):
+        if source != "broadcast":
+            return name
+        s = re.sub(r"\([^)]*\)", " ", name.lower())   # strip (NOR), (USA), ...
+        s = re.sub(r"[^a-z\s]", " ", s)               # drop underscores, commas, digits
+        toks = sorted({t for t in s.split() if len(t) >= 2})
+        return "elite::" + " ".join(toks) if toks else name
+    players = np.array([_canon(p, s) for p, s in zip(raw_players, src)])
+    n_merged = len(set(raw_players[src == "broadcast"])) - len(set(players[src == "broadcast"]))
+    print(f"E5: canonicalised broadcast names "
+          f"({len(set(raw_players[src=='broadcast']))} variants -> {len(set(players[src=='broadcast']))} identities, {n_merged} merged)")
     ctx2 = ctx.clone(); ctx2[:, 0] = 0.0              # zero ELO (keep clock -> time-elasticity works)
     tr, _ = player_split(players, mc["val_frac"], cfg["data"]["sample_seed"])
     print("E5: fitting elo-free depth model...")
@@ -480,7 +525,17 @@ def e5(cfg, min_dec=100):
             telas = float((xc @ yc) / (xc @ xc))           # OLS slope, no SVD
         rows.append((p, elo[m].mean(), src[m][0] == "broadcast", depth, trap, disc, telas, m.sum()))
     P = pd.DataFrame(rows, columns=["player", "rating", "elite", "depth", "trap", "disc", "telas", "n"])
-    print(f"E5: {len(P)} players with >={min_dec} decisions ({P.elite.sum()} elite)")
+    P["name"] = [p.replace("elite::", "").title() if p.startswith("elite::") else p for p in P["player"]]
+    P.to_csv("data/player_profiles.csv", index=False)
+    print(f"E5: {len(P)} players with >={min_dec} decisions ({P.elite.sum()} elite) -> data/player_profiles.csv")
+    z0 = {f: (P[f].mean(), P[f].std() + 1e-9) for f in ["depth", "trap", "disc", "telas"]}
+    print("   selected young elites (z vs population):")
+    for key in ["gukesh", "sindarov", "erigaisi", "praggnanandhaa", "firouzja", "keymer"]:
+        hit = P[P.player.str.contains(key, case=False)]
+        if len(hit):
+            r = hit.sort_values("n", ascending=False).iloc[0]
+            zz = "  ".join(f"{f}={(r[f]-z0[f][0])/z0[f][1]:+.2f}" for f in ["depth", "trap", "disc", "telas"])
+            print(f"     {r['name'][:24].ljust(25)} rating={int(r['rating'])} n={int(r['n'])}  {zz}")
 
     feats = ["depth", "trap", "disc", "telas"]
     X = P[feats].to_numpy(); t = P["rating"].to_numpy()
@@ -495,7 +550,7 @@ def e5(cfg, min_dec=100):
     print("   " + "player".ljust(24) + "rating  " + "  ".join(f"{f:>6s}" for f in feats))
     for _, r in el.iterrows():
         zz = "  ".join(f"{(r[f]-z[f][0])/z[f][1]:>6.2f}" for f in feats)
-        print(f"   {r['player'][:23].ljust(24)}{int(r['rating']):>5d}   {zz}")
+        print(f"   {r['name'][:23].ljust(24)}{int(r['rating']):>5d}   {zz}")
     # 1-D (depth) ranking vs true-rating ranking among the elite (misranking demo)
     el_d = el.sort_values("depth", ascending=False)["player"].tolist()
     el_r = el.sort_values("rating", ascending=False)["player"].tolist()
@@ -508,7 +563,7 @@ def e5(cfg, min_dec=100):
     w = 0.13
     for i, (_, r) in enumerate(el.iterrows()):
         ax.bar(np.arange(len(feats)) + i*w, [(r[f]-z[f][0])/z[f][1] for f in feats],
-               w, label=f"{r['player'][:16]} ({int(r['rating'])})")
+               w, label=f"{r['name'][:16]} ({int(r['rating'])})")
     ax.set_xticks(np.arange(len(feats)) + 2.5*w); ax.set_xticklabels(feats)
     ax.axhline(0, color="grey", lw=.7); ax.set_ylabel("z vs population")
     ax.set_title(f"E5 elite profiles (rating R^2: 1-D={r2_1d:.2f}, profile={r2_full:.2f})")

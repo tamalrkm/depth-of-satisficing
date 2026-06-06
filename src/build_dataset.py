@@ -115,11 +115,13 @@ def main(cfg):
         best = wp.max(axis=0, keepdims=True)                          # [1, D]
         delta = np.clip(best - wp, 0.0, None)                         # [M, D]
 
-        # per-move swing sw(m) = sum_d (delta_{m,d} - delta_{m,D}); total swing of position
+        # per-move swing sw(m) = sum_d (delta_{m,d} - delta_{m,D}); total swing of position.
+        # ICMLA-2015 convention: a move SWINGS UP if its delta DECREASES with depth (potential
+        # shows only deep) => sw>0; SWINGS DOWN if delta rises with depth (a trap) => sw<0.
         sw = (delta - delta[:, -1:]).sum(axis=1)                      # [M]
         total_swing = float(np.abs(sw).sum())
         played_idx = cand.index(played)
-        swing_class = "down" if sw[played_idx] > 0 else "up"
+        swing_class = "up" if sw[played_idx] > 0 else "down"
 
         qd = q_by_pos[pos_id]
         logq = np.array([math.log(max(qd.get(m, Q_FLOOR), Q_FLOOR)) for m in cand])

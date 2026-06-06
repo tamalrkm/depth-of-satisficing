@@ -1,0 +1,86 @@
+data:
+  raw_dir: data/raw
+  positions: data/positions.parquet
+  selected: data/synthetic/selected.parquet
+  depth_traj: data/synthetic/depth_traj.parquet
+  maia_q: data/synthetic/maia_q.parquet
+  train_tensor: data/synthetic/train.pt
+  lichess_month: 2025-09
+  hf_repo: Lichess/standard-chess-games
+  hf_shards: 2
+  sample_seed: 17
+  elo_bins:
+  - 1200
+  - 1400
+  - 1600
+  - 1800
+  - 2000
+  - 2200
+  - 2400
+  - 2600
+  time_classes:
+  - bullet
+  - blitz
+  - rapid
+  - classical
+  games_per_cell: 300
+  min_ply: 9
+  max_ply: 120
+engine:
+  path: ~/projects/stockfish_chess/engine/stockfish
+  net: nn-71d6d32cb962.nnue
+  threads: 1
+  hash_mb: 256
+  depth: 21
+  multipv: 9
+  show_wdl: true
+  shared_net: true
+  max_nodes: 200000000
+parallel:
+  workers: 128
+  numa:
+    enabled: true
+    node0_cpus: 0-31,64-95
+    node1_cpus: 32-63,96-127
+  dedup_fen: true
+  shard_dir: data/synthetic/shards
+maia:
+  model: maia3-79m
+  device: cuda
+  use_uci_history: true
+select:
+  winprob_margin: 0.1
+  min_candidates: 2
+  keep_all_swing_down: true
+model:
+  depth_grid:
+  - 2
+  - 4
+  - 6
+  - 8
+  - 10
+  - 12
+  - 14
+  - 16
+  - 18
+  - 20
+  - 22
+  context_dim: 8
+  hidden: 128
+  entropy_reg: 0.01
+  lr: 0.003
+  batch_size: 512
+  epochs: 30
+  val_frac: 0.15
+  split_by: player
+synthetic:
+  planted_depths:
+  - 4
+  - 6
+  - 8
+  - 10
+  - 12
+  - 14
+  - 16
+  games_per_depth: 200
+  softmax_beta_gen: 6.0

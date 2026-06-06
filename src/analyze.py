@@ -129,11 +129,25 @@ def e4(cfg):
     print(f"\nfusion vs state-only:  Delta NLL = {gap:+.4f} nats  "
           f"(top1 {100*(f_t1.mean()-s_t1.mean()):+.2f} pts)   [positive = fusion better]")
 
-    # --- pre-registered differential: gap by time_class x swing_class ---
+    # --- pre-registered differential #1 (manuscript E4): swing MAGNITUDE x time control ---
     tc = np.array(meta["time_class"])[vidx]
-    sw = np.array(meta["swing"])[vidx]
     d_gap = s_nll - f_nll   # per-decision improvement from fusion
-    print("\n=== differential gain (Delta NLL, fusion - state) by stratum ===")
+    tsw = ctx[vidx, 3].numpy()                       # total swing of position (magnitude)
+    hi = tsw >= np.median(tsw)
+    print("\n=== registered E4: gain by swing-MAGNITUDE x time control ===")
+    print(f"  {'stratum':28s} {'n':>8s} {'dNLL':>9s}")
+    for t in ["classical", "rapid", "blitz", "bullet"]:
+        for lab, m in [("high-swing", hi), ("low-swing", ~hi)]:
+            sel = (tc == t) & m
+            if sel.sum():
+                print(f"  {t+'/'+lab:28s} {sel.sum():>8d} {d_gap[sel].mean():>+9.4f}")
+    a0 = d_gap[(tc == "classical") & hi]; b0 = d_gap[(tc == "blitz") & ~hi]
+    if len(a0) and len(b0):
+        print(f"  interaction(classical/high - blitz/low) = {a0.mean()-b0.mean():+.4f} nats")
+
+    # --- differential #2 (dissociation bonus): gap by time_class x swing DIRECTION ---
+    sw = np.array(meta["swing"])[vidx]
+    print("\n=== bonus: gain by swing-DIRECTION x time control ===")
     print(f"  {'stratum':28s} {'n':>8s} {'dNLL':>9s}")
     for t in ["classical", "rapid", "blitz", "bullet"]:
         for s in ["down", "up"]:
@@ -148,6 +162,32 @@ def e4(cfg):
               f"vs gain(blitz,swing-up)={b.mean():+.4f}  "
               f"contrast={a.mean()-b.mean():+.4f} nats")
         print("(pre-registered: fusion should help most in classical/high-swing, ~0 in blitz/low-swing)")
+
+    # --- significance via player-clustered bootstrap (robust alt. to the registered mixed model) ---
+    # The registered E4 contrast is the SWING-MAGNITUDE x time-control interaction:
+    # gain(classical, high-swing) - gain(blitz, low-swing).
+    vpl = np.array(players)[vidx]
+    pl = np.unique(vpl)
+    rng = np.random.default_rng(0)
+    by_p = {p: np.where(vpl == p)[0] for p in pl}
+    cl_hi = (tc == "classical") & hi          # hi = high swing magnitude (from the E4 block above)
+    bl_lo = (tc == "blitz") & ~hi
+    inter = d_gap[cl_hi].mean() - d_gap[bl_lo].mean()
+    boots_overall, boots_inter = [], []
+    for _ in range(1000):
+        samp = rng.choice(pl, len(pl), replace=True)
+        rows = np.concatenate([by_p[p] for p in samp])
+        boots_overall.append(d_gap[rows].mean())
+        ai = d_gap[rows][cl_hi[rows]]; bi = d_gap[rows][bl_lo[rows]]
+        if len(ai) and len(bi):
+            boots_inter.append(ai.mean() - bi.mean())
+    bo = np.percentile(boots_overall, [2.5, 97.5])
+    bc = np.percentile(boots_inter, [2.5, 97.5])
+    print(f"\nplayer-clustered bootstrap (1000x):")
+    print(f"  overall fusion-state gain:        {gap:+.4f}  95% CI [{bo[0]:+.4f}, {bo[1]:+.4f}]  "
+          f"{'(excludes 0)' if bo[0] > 0 else '(includes 0)'}")
+    print(f"  swing-magnitude x TC interaction: {inter:+.4f}  95% CI [{bc[0]:+.4f}, {bc[1]:+.4f}]  "
+          f"{'(excludes 0)' if bc[0] > 0 else '(includes 0)'}")
 
 
 @torch.no_grad()
@@ -215,27 +255,38 @@ def e2(cfg):
     model = fit(mc, dev, delta, logq, mask, dmask, ctx, y, tr)
     dh = dhat_over(model, dev, delta, logq, mask, dmask, ctx, y, vidx)
     vb = np.array([band_of(e) for e in elo[vidx]]); vpl = players[vidx]
+    vtc = np.array(meta["time_class"])[vidx]
 
-    # Fig2a: per-band mean E[d] with player-cluster bootstrap 95% CI (bootstrap per-player means)
-    rng = np.random.default_rng(0); means, los, his = [], [], []
-    for bi in range(len(BANDS)):
-        sel = vb == bi
-        if sel.sum() < 50:
-            means.append(np.nan); los.append(np.nan); his.append(np.nan); continue
-        ps = np.unique(vpl[sel])
-        pmean = np.array([dh[sel & (vpl == p)].mean() for p in ps])   # per-player mean E[d]
-        means.append(pmean.mean())
-        bs = pmean[rng.integers(0, len(pmean), size=(1000, len(pmean)))].mean(1)
-        los.append(np.percentile(bs, 2.5)); his.append(np.percentile(bs, 97.5))
-    means = np.array(means)
+    # Fig2a: depth vs rating WITHIN each time control (pooling confounds skill with clock,
+    # since elite/high-rated play is mostly classical). Bullet is the natural negative control.
     fig, ax = plt.subplots(1, 2, figsize=(11, 4.2))
-    ax[0].errorbar(BAND_MID, means, yerr=[means-np.array(los), np.array(his)-means],
-                   marker="o", capsize=3)
+    rng = np.random.default_rng(0)
+    print(f"E2a depth vs rating, WITHIN time control (pooled rho={spearmanr(elo[vidx], dh).correlation:+.3f}, confounded):")
+    colors = {"classical": "navy", "rapid": "teal", "blitz": "darkorange", "bullet": "grey"}
+    for t in ["classical", "rapid", "blitz", "bullet"]:
+        tsel = vtc == t
+        means, los, his = [], [], []
+        for bi in range(len(BANDS)):
+            sel = tsel & (vb == bi)
+            if sel.sum() < 50:
+                means.append(np.nan); los.append(np.nan); his.append(np.nan); continue
+            ps = np.unique(vpl[sel])
+            pmean = np.array([dh[sel & (vpl == p)].mean() for p in ps])
+            means.append(pmean.mean())
+            bs = pmean[rng.integers(0, len(pmean), size=(1000, len(pmean)))].mean(1)
+            los.append(np.percentile(bs, 2.5)); his.append(np.percentile(bs, 97.5))
+        means = np.array(means)
+        rho = spearmanr(elo[vidx][tsel], dh[tsel]).correlation
+        lab = f"{t} (rho={rho:+.2f})" + ("  [control]" if t == "bullet" else "")
+        ok = ~np.isnan(means)
+        ax[0].errorbar(np.array(BAND_MID)[ok], means[ok],
+                       yerr=[(means-np.array(los))[ok], (np.array(his)-means)[ok]],
+                       marker="o", capsize=2, color=colors[t], label=lab)
+        print(f"   {t:10s} n={tsel.sum():>6d}  Spearman={rho:+.3f}  "
+              f"per-band E[d]: " + " ".join(f"{m:.2f}" for m in means if not np.isnan(m)))
     ax[0].set_xlabel("rating"); ax[0].set_ylabel("depth of satisficing  E[d]")
-    ax[0].set_title("(a) depth rises with skill"); ax[0].grid(alpha=.3)
-    rho = spearmanr(elo[vidx], dh).correlation
-    print(f"E2a per-band E[d]: " + " ".join(f"{m:.2f}" for m in means))
-    print(f"   Spearman(E[d], rating) held-out = {rho:+.3f}")
+    ax[0].set_title("(a) depth rises with skill, within time control"); ax[0].grid(alpha=.3)
+    ax[0].legend(fontsize=7)
 
     # Fig2b: within-player time-pressure effect. Need think-time -> join selected by pos_id.
     sel_df = pd.read_parquet(cfg["data"]["selected"], columns=["pos_id", "time_spent"]).set_index("pos_id")
@@ -299,8 +350,69 @@ def e3(cfg):
     print(f"E3 -> {p}")
 
 
+def e6(cfg, syn_cfg_path="config_syn.yaml"):
+    """Fig6: recover planted depth from synthetic agents (identifiability).
+
+    Recovery is a per-agent depth estimate from the agents' MOVES, not from context: the
+    synthetic agents are pure-search (no Maia patterns) and were generated at one decision
+    sharpness, so the estimator uses the search likelihood (alpha=0), fits beta to the
+    synthetic population, and reads each agent's depth from a flat-prior posterior. (Applying
+    the human-fit context prior instead collapses E[d] to the prior mean -- the per-decision
+    move evidence is too weak to move a fixed prior; see the manuscript discussion.)"""
+    os.makedirs(FIGDIR, exist_ok=True)
+    syn = yaml.safe_load(open(syn_cfg_path))
+    blob, delta, logq, mask, dmask, ctx, y = load(syn)
+    meta = blob["meta"]
+    grid = np.array(cfg["model"]["depth_grid"]); D = len(grid)
+    sel = pd.read_parquet(syn["data"]["selected"], columns=["pos_id", "planted_depth"]).set_index("pos_id")
+    planted = sel.reindex(np.array(meta["pos_id"]))["planted_depth"].to_numpy()
+    agent = np.array(meta["player"])
+    mb = mask.bool()
+
+    def logp_yd(beta, alpha=0.0):                         # [N, D] log P(y | depth d)
+        logits = (-beta * delta + alpha * logq.unsqueeze(-1)).masked_fill(~mb.unsqueeze(-1), -1e9)
+        lp = torch.log_softmax(logits, 1)
+        return lp.gather(1, y.view(-1, 1, 1).expand(-1, 1, D)).squeeze(1).numpy()
+
+    from scipy.special import logsumexp
+    betas = np.linspace(1, 14, 27)
+    beta_hat = betas[int(np.argmax([logsumexp(logp_yd(b) - np.log(D), 1).sum() for b in betas]))]
+    L = logp_yd(beta_hat)
+    print(f"E6: fitted beta on synthetic = {beta_hat:.1f} (agents generated at beta_gen={cfg['synthetic']['softmax_beta_gen']})")
+
+    agents = np.unique(agent); rec, rec_pl = [], []
+    for ag in agents:
+        m = agent == ag
+        s = L[m].sum(0); r = np.exp(s - s.max()); r /= r.sum()
+        rec.append(float((grid * r).sum())); rec_pl.append(int(planted[m][0]))
+    rec = np.array(rec); rec_pl = np.array(rec_pl)
+    depths = sorted(set(rec_pl))
+    gmean = np.array([rec[rec_pl == d].mean() for d in depths])
+    gsd = np.array([rec[rec_pl == d].std() for d in depths])
+    mae = np.mean(np.abs(rec - rec_pl))
+    rho = spearmanr(rec_pl, rec).correlation
+    rho_g = spearmanr(depths, gmean).correlation
+
+    fig, ax = plt.subplots(figsize=(5.4, 5))
+    lim = [min(depths) - 2, max(depths) + 2]
+    ax.plot(lim, lim, "--", color="grey", label="identity")
+    ax.scatter(rec_pl + np.random.default_rng(0).normal(0, .15, len(rec_pl)), rec,
+               s=6, alpha=.15, color="steelblue")
+    ax.errorbar(depths, gmean, yerr=gsd, marker="o", color="navy", capsize=3, label="recovered E[d] (mean±sd)")
+    ax.set_xlabel("planted depth $d_{plant}$"); ax.set_ylabel("recovered depth E[d]")
+    ax.set_title(f"E6 recovery: per-agent MAE={mae:.1f}, group $\\rho$={rho_g:.2f}")
+    ax.legend(); ax.grid(alpha=.3)
+    fig.tight_layout(); p = f"{FIGDIR}/fig6_synthetic_recovery.png"; fig.savefig(p, dpi=150)
+    print("E6 recovery (planted -> recovered E[d], per-agent mean±sd):")
+    for d, m, s in zip(depths, gmean, gsd):
+        print(f"   d_plant={d:2d} -> E[d]={m:5.2f} ± {s:.2f}")
+    print(f"   per-agent MAE={mae:.2f} plies | Spearman per-agent={rho:+.3f} | "
+          f"group-mean monotonic Spearman={rho_g:+.3f}")
+    print(f"E6 -> {p}")
+
+
 def main(cfg, result):
-    runners = {"e1": e1, "e2": e2, "e3": e3, "e4": e4}
+    runners = {"e1": e1, "e2": e2, "e3": e3, "e4": e4, "e6": e6}
     todo = list(runners) if result == "all" else [result]
     for r in todo:
         if r not in runners:

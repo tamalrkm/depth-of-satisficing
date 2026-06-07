@@ -6,14 +6,14 @@
 criteria below are fixed *before* the replication dataset is parsed or analysed.
 **Design:** The hypotheses and predicted directions/magnitudes are derived from a prior analysis
 of the Lichess **2025-09** month (and the elite OTB/broadcast set). They are now to be confirmed
-on an **untouched** month — Lichess **2026-04** (standard, rated; alternatively 2026-05) — processed by an identical,
+on an **untouched** month — Lichess **2026-05** (standard, rated) — processed by an identical,
 fixed pipeline. This is a pre-registered *replication*, not a blind test of novel hypotheses; we
 state this explicitly.
 
 ---
 
 ## 1. Data & sampling (fixed)
-- **Source:** Lichess open database, standard rated games, month **2026-04** (alternatively 2026-05); plus the elite
+- **Source:** Lichess open database, standard rated games, month **2026-05**; plus the elite
   over-the-board (broadcast) stratum for the individual-profile hypothesis (H6).
 - **Sampling:** balanced reservoir sample per (rating band × time class) as in `config.yaml`
   (200-pt bands 1200–2600+; bullet/blitz/rapid/classical), seed **17**; plies 9–120.
@@ -27,11 +27,12 @@ The Lichess open database is an **existing public dataset not collected by the a
 - The authors have parsed and **fully analysed the 2025-09 month** and a broadcast/OTB elite
   set from the same source — this is the primary study from which the hypotheses and their
   predicted directions/magnitudes are derived.
-- The **replication month (2026-04; alternatively 2026-05) has NOT been parsed, sampled,
-  engine-analysed, or inspected at any granularity** prior to this registration. The 2026-04
-  archive has resided on disk as an **unprocessed compressed `.pgn.zst`** since 2026-05-29
-  (the pipeline's `config.lichess_month` pointed at the 2025-09 HuggingFace parquet, so the
-  2026 archives were never read). No replication outcome has been observed.
+- The **replication month 2026-05 (online Lichess + the 2026-05 broadcast/OTB set) has NOT
+  been downloaded, parsed, sampled, engine-analysed, or inspected at any granularity** prior to
+  this registration; it is obtained only after the registration timestamp. (Earlier 2026-03/04
+  archives also resided on disk unprocessed since 2026-05-29 — the pipeline's
+  `config.lichess_month` pointed at the 2025-09 HuggingFace parquet, so no 2026 data was ever
+  read.) No replication outcome has been observed.
 - After registration, the replication month is processed **once** by the fixed pipeline and
   each confirmatory test is run **once**; results are reported regardless of outcome.
 

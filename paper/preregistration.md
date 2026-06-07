@@ -1,7 +1,7 @@
 # Pre-registration: Depth of satisficing — out-of-sample replication
 
 **Title:** Errors reveal the depth of human reasoning — pre-registered replication on a fresh month
-**Authors:** T. T. Biswas, K. W. Regan
+**Authors:** Tamal Maharaj, K. W. Regan
 **Status:** Pre-registered replication. Hypotheses, sampling, pipeline, tests, and decision
 criteria below are fixed *before* the replication dataset is parsed or analysed.
 **Design:** The hypotheses and predicted directions/magnitudes are derived from a prior analysis

@@ -149,5 +149,5 @@ cross-domain (Go) transfer. These are reported as exploratory and labelled as su
 ## 9. Notes
 - Broadcast `WhiteElo`/`BlackElo` are event-time tags averaged per player; used for within-data
   structure, not as live ratings.
-- This file is committed to the project git history to timestamp it before the 2026-05 data is
+- This file is committed to the project git history to timestamp it before the replication-month data is
   processed; an external timestamp (OSF / AsPredicted) should be posted in parallel.

@@ -103,16 +103,6 @@ negative control: when no one has time to search, depth no longer separates skil
 a pure rating artefact. The same logic appears within players: de-meaned depth rises across
 think-time quartiles ($-0.11,-0.10,-0.07,+0.27$ plies, fast to slow; Fig.~\ref{fig:f2}b).
 
-\paragraph{A within-game time-pressure signature at the move-40 control.} Over-the-board games
-impose a classical time control at move~40, after which the clock is replenished. In these
-games the error of the played move (in live, undecided positions) rises through the
-move~31--40 scramble and drops sharply once time is restored (Fig.~\ref{fig:f7}), reproducing
-in win-probability terms a centipawn-based signature first reported by \citet{biswas2015}. The
-effect is specific to games that carry the move-40 control: online ``classical'' play, which
-uses a single incremental control, shows no such peak, and averaging over decided endgames
-(where win probability is insensitive to error) erases it---so the signature emerges only when
-both conditions hold.
-
 \paragraph{Inferred depth tracks real thinking time.} This is the construct's key
 non-circular test. A model fit with the clock feature removed---so timing can play no role in
 the estimate---nonetheless yields a depth that correlates with the actual time the player
@@ -300,10 +290,7 @@ the profile recovers rating ($R^2=0.57$).}
 \begin{figure}[h]\centering\includegraphics[width=0.5\linewidth]{figs/fig6_synthetic_recovery.png}
 \caption{Synthetic-agent recovery: recovered vs.\ planted depth (ordinal; group Spearman $=1.0$).}
 \label{fig:f6}\end{figure}
-\begin{figure}[h]\centering\includegraphics[width=0.55\linewidth]{figs/fig7_move40.png}
-\caption{Within-game time-pressure signature: played-move error in live OTB positions rises
-into the move-40 control and drops once the clock is replenished.}
-\label{fig:f7}\end{figure}
+
 
 \bibliographystyle{plainnat}
 \bibliography{refs}

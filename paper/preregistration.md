@@ -74,10 +74,13 @@ The Lichess open database is an **existing public dataset not collected by the a
 
 **SECONDARY**
 
-- **H2 — Within-game/within-player time pressure.** (a) Within players, de-meaned `d̂` rises
-  monotonically across think-time quartiles (fast→slow). (b) In OTB games (move-40 control), the
-  played-move error in live positions (|eval|<150cp) rises through moves 31–40 and drops after
-  move 40 [reproducing Biswas & Regan 2015 in win-probability terms].
+- **H2 — Within-player time pressure.** Within players, de-meaned `d̂` rises monotonically
+  across think-time quartiles (fast→slow): players satisfice shallower when they spend less
+  time on a move. (Note: the move-40 time-control error signature of Biswas & Regan 2015 did
+  **not** replicate on the 2025-09 + broadcast data — neither in win-probability nor in
+  centipawn loss, even restricting to games with a detected move-40 clock jump; cp-loss rises
+  monotonically into the endgame, plausibly from survivorship and shallow `lichess_eval`. It is
+  therefore demoted to **exploratory**, §8, not a confirmatory prediction.)
 
 - **H5 — Skill information concentrates in traps (swing-down).** Single-decision rating
   predictability (R²) is **higher for swing-down than swing-up** decisions [≈6×: 0.081 vs 0.012].
@@ -144,8 +147,10 @@ The Lichess open database is an **existing public dataset not collected by the a
 
 ## 8. Exploratory (explicitly NOT confirmatory)
 Won-vs-lost decomposition; named individual-player (e.g., world-champion) profiles and the
-"two-effective-dimensions" structure; the complexity-vs-clock decomposition of error; any
-cross-domain (Go) transfer. These are reported as exploratory and labelled as such.
+"two-effective-dimensions" structure; the complexity-vs-clock decomposition of error; whether a
+move-40 time-control error signature (Biswas & Regan 2015) is detectable given adequate
+time-control/clock metadata and a deeper per-move analysis (it did not replicate on the primary
+data); any cross-domain (Go) transfer. These are reported as exploratory and labelled as such.
 
 ## 9. Notes
 - Broadcast `WhiteElo`/`BlackElo` are event-time tags averaged per player; used for within-data

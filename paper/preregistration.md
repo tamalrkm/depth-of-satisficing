@@ -6,14 +6,14 @@
 criteria below are fixed *before* the replication dataset is parsed or analysed.
 **Design:** The hypotheses and predicted directions/magnitudes are derived from a prior analysis
 of the Lichess **2025-09** month (and the elite OTB/broadcast set). They are now to be confirmed
-on an **untouched** month — Lichess **2026-05** (standard, rated) — processed by an identical,
+on an **untouched** month — Lichess **2026-04** (standard, rated; alternatively 2026-05) — processed by an identical,
 fixed pipeline. This is a pre-registered *replication*, not a blind test of novel hypotheses; we
 state this explicitly.
 
 ---
 
 ## 1. Data & sampling (fixed)
-- **Source:** Lichess open database, standard rated games, month **2026-05**; plus the elite
+- **Source:** Lichess open database, standard rated games, month **2026-04** (alternatively 2026-05); plus the elite
   over-the-board (broadcast) stratum for the individual-profile hypothesis (H6).
 - **Sampling:** balanced reservoir sample per (rating band × time class) as in `config.yaml`
   (200-pt bands 1200–2600+; bullet/blitz/rapid/classical), seed **17**; plies 9–120.
@@ -92,7 +92,7 @@ The Lichess open database is an **existing public dataset not collected by the a
 
 ## 4. Decision criteria (what counts as a successful replication)
 - **Replication is declared successful** if **all three PRIMARY hypotheses (H1, H3, H4)** hold in
-  the predicted direction with the stated CI/significance criteria on the 2026-05 data.
+  the predicted direction with the stated CI/significance criteria on the replication-month data.
 - Each SECONDARY hypothesis is reported as **replicated / not replicated** by its directional
   criterion; they are supporting, not gating.
 - Magnitudes are **not** required to match the 2025-09 values; only the **directions and

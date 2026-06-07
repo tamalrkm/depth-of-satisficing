@@ -21,6 +21,20 @@ state this explicitly.
 - **Split:** all model fitting and held-out evaluation are **split by player** (no player in
   both train and test). Broadcast player names are canonicalised to one identity per person.
 
+### 1a. Prior knowledge of / access to the data (secondary-data disclosure)
+The Lichess open database is an **existing public dataset not collected by the authors**
+(no human-subjects intervention; public usernames/player names only). Prior access:
+- The authors have parsed and **fully analysed the 2025-09 month** and a broadcast/OTB elite
+  set from the same source — this is the primary study from which the hypotheses and their
+  predicted directions/magnitudes are derived.
+- The **replication month (2026-04; alternatively 2026-05) has NOT been parsed, sampled,
+  engine-analysed, or inspected at any granularity** prior to this registration. The 2026-04
+  archive has resided on disk as an **unprocessed compressed `.pgn.zst`** since 2026-05-29
+  (the pipeline's `config.lichess_month` pointed at the 2025-09 HuggingFace parquet, so the
+  2026 archives were never read). No replication outcome has been observed.
+- After registration, the replication month is processed **once** by the fixed pipeline and
+  each confirmatory test is run **once**; results are reported regardless of outcome.
+
 ## 2. Pipeline & fixed parameters (identical to the primary analysis)
 - **Engine:** Stockfish 18, `Threads=1`, `Hash=256MB`, **depth D=21, MultiPV K=9**, per-position
   **node cap 2×10⁸** (search stops at D or the cap; capped positions, ~0.1%, are depth-masked).
@@ -84,12 +98,55 @@ state this explicitly.
 - Magnitudes are **not** required to match the 2025-09 values; only the **directions and
   significance** above are confirmatory. Any deviation is reported.
 
-## 5. Exploratory (explicitly NOT confirmatory)
+## 5. Data exclusion rules (fixed)
+- **Plies:** keep 9–120 (skip opening book and long-tail); positions with parse errors or no
+  legal candidate are dropped.
+- **Node-capped positions** (reached depth < D): retained, with unreached grid depths masked
+  in the likelihood (not imputed) and flagged; the capped fraction is reported.
+- **Model fits:** decisions lacking a Maia-3 policy or any context feature are excluded.
+- **Convergent test (H3):** decisions with missing or non-positive observed think-time are
+  excluded; clock deltas around the move-40 control are contaminated by the increment and are
+  excluded via a sign/sanity filter on `time_spent`.
+- **Live-position filter (H2b/move-40):** `|lichess_eval| < 150` cp.
+- **Profiles/rating recovery (H6):** players with < 100 decisions excluded; broadcast Elo is
+  the per-player event-time average.
+- **Time class:** standard Lichess buckets (bullet/blitz/rapid/classical) from base+increment.
+
+## 6. Contingencies (if–then)
+- **If** the linear mixed-effects model (H4) fails to converge or is infeasible at scale,
+  **then** the pre-specified **player-clustered bootstrap (1000×)** is the primary inference and
+  the mixed-effects coefficient is reported as secondary (or omitted with reason).
+- **If** a rating band within a time control has < 50 held-out decisions, **then** it is omitted
+  from the per-band curve (H1); the Spearman uses all available decisions; omission is reported.
+- **If** bullet lacks high-rating coverage, **then** the negative control is reported over the
+  available range with that caveat.
+- **If** the engine node cap is hit by > 2% of positions (vs ~0.1% expected), **then** the
+  capped fraction is reported and the primary tests are re-run excluding capped positions as a
+  robustness check.
+- **If** the replication month lacks per-move clock data (`%clk`), **then** the clock-dependent
+  parts (H2, H3) are reported as "not testable on this month"; clock-independent H1/H4 proceed.
+- **If** any primary test's parametric assumption is violated, **then** the rank-based/bootstrap
+  equivalent already specified (Spearman, player-clustered bootstrap) governs the decision, so
+  no parametric assumption gates a primary result.
+- **If** the elo-free depth axis (H6) shows non-zero rating R² (unlike 2025-09), **then** that
+  is reported transparently; the H6 criterion (profile R² > depth-alone R²) still applies.
+
+## 7. Anticipated deviations
+- Sample size will differ from 2025-09 (different month volume); we target ≥150k FENs and
+  report the actual count and per-cell coverage.
+- The broadcast/elite stratum differs by month (different events/players); H6 coverage is
+  reported, not adjusted to match 2025-09.
+- Engine (SF18, net `nn-71d6d32cb962`) and Maia-3 (`maia3-79m`) versions are pinned; any
+  unavoidable version change is reported.
+- Pipeline bug-fixes that do not touch the hypotheses, variables, or tests are permitted and
+  logged; any change affecting a test is reported as a deviation from this plan.
+
+## 8. Exploratory (explicitly NOT confirmatory)
 Won-vs-lost decomposition; named individual-player (e.g., world-champion) profiles and the
 "two-effective-dimensions" structure; the complexity-vs-clock decomposition of error; any
 cross-domain (Go) transfer. These are reported as exploratory and labelled as such.
 
-## 6. Notes
+## 9. Notes
 - Broadcast `WhiteElo`/`BlackElo` are event-time tags averaged per player; used for within-data
   structure, not as live ratings.
 - This file is committed to the project git history to timestamp it before the 2026-05 data is

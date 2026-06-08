@@ -20,6 +20,10 @@ state this explicitly.
 - **Target size:** ≥150,000 analysed unique FENs (sufficient power; full month optional).
 - **Split:** all model fitting and held-out evaluation are **split by player** (no player in
   both train and test). Broadcast player names are canonicalised to one identity per person.
+- **Pool-specific ratings:** Lichess Elo is a separate Glicko-2 rating per time control and is
+  **not comparable across controls**; every rating analysis (H1, H5, H6) is therefore run
+  **within a single time control** (or within-pool normalised). Ratings are never pooled across
+  controls.
 
 ### 1a. Prior knowledge of / access to the data (secondary-data disclosure)
 The Lichess open database is an **existing public dataset not collected by the authors**

@@ -82,15 +82,17 @@ models exist \citep{ruoss2024}.
 
 \section{Results}
 \paragraph{Skill lives in the errors, not the successes.} Across 922{,}412 decisions spanning
-ratings 1200--2600+ and all time controls, the error of the played move is nearly
-indistinguishable across skill at shallow depth and diverges only as depth increases: the
-mean regret of the played move at full depth falls from $0.063$ at the weakest band to
-$0.029$ at the strongest (Fig.~\ref{fig:f1}). The discriminating information is concentrated
-in the depth structure of mistakes: a single ``swing-down'' decision---a played move that
-looks good shallow but is overtaken deeper---carries $\approx\!6\times$ the rating information
-of an average decision ($R^2=0.081$ vs.\ $0.012$ for predicting rating from one move), and
-that information lies in \emph{at what depth} the move is refuted, not in the size of the
-error.
+ratings 1200--2600+, the error of the played move is nearly indistinguishable across skill at
+shallow depth and diverges only as depth increases. Because Lichess ratings are pool-specific
+(a separate rating per time control), we read this \emph{within} each control: the mean regret
+of the played move at full depth falls with rating in classical (from $0.059$ at the weakest
+band to $0.028$ at the strongest), rapid, and blitz, and is essentially flat in bullet
+($0.070\to0.055$), where time precludes deep search (Fig.~\ref{fig:f1}). The discriminating
+information is concentrated in the depth structure of mistakes: within classical, a single
+``swing-down'' decision---a played move that looks good shallow but is overtaken deeper---carries
+$\approx\!6\times$ the rating information of an average decision ($R^2=0.081$ vs.\ $0.011$ for
+predicting rating from one move), and that information lies in \emph{at what depth} the move is
+refuted, not in the size of the error.
 
 \paragraph{Depth of satisficing rises with skill and collapses under time pressure.} Because
 stronger players are over-represented in slow play, this relationship must be read
@@ -225,9 +227,11 @@ identifiability and $\beta$ tied globally; data are split by player.
 r_d=P(d\mid y,p,c)=\frac{\pi_d\,P(y\mid d)}{\sum_{d'}\pi_{d'}P(y\mid d')},
 \qquad \hat d=\sum_d d\,r_d ,
 \end{equation}
-gives a per-decision depth with uncertainty. Depth-vs-rating is reported \emph{within} time
-control (pooling confounds skill with available clock); per-band estimates use player-clustered
-bootstrap 95\% credible intervals (resampling players, 1000 replicates).
+gives a per-decision depth with uncertainty. Lichess ratings are \emph{pool-specific} (a
+separate Glicko-2 rating per time control, not comparable across controls); we therefore
+never pool ratings across controls---every rating analysis is run \emph{within} a time control
+(pooling would also confound skill with available clock). Per-band estimates use
+player-clustered bootstrap 95\% confidence intervals (resampling players, 1000 replicates).
 
 \paragraph{Profiles and rating recovery.} Per player ($\ge100$ decisions): mean $\hat d$,
 trap-susceptibility (rate of played swing-down moves weighted by their shallow attractiveness),

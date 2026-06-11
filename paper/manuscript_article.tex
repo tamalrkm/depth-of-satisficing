@@ -1,24 +1,28 @@
-\documentclass[pdflatex,sn-nature]{sn-jnl}
-% Nature Human Behaviour submission format (Springer Nature class, Nature numbered reference
-% style). sn-nature.bst is not in this TeX installation, so the standard numbered natbib style
-% (unsrtnat) is used as a drop-in; swap to sn-nature.bst at submission if available.
-\usepackage{graphicx,amsmath,amssymb}
+\documentclass[11pt]{article}
+% Draft for Nature Human Behaviour. Swap to the NHB / Springer Nature class at submission;
+% NHB uses unstructured abstract (~150 words), main text ~5000 words, Methods after Discussion.
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage[round]{natbib}
+\usepackage{hyperref}
 \usepackage{xcolor}
 \newcommand{\todo}[1]{\textcolor{red}{[#1]}}
 
+\title{\textbf{Errors reveal the depth of human reasoning}\\[2pt]
+\large Measuring depth of deliberation from the structure of mistakes\\ in millions of real decisions}
+\author{Tamal Maharaj\thanks{T.\ Maharaj formerly published as T.\ T.\ Biswas.} \and Kenneth W. Regan}
+\date{}
+
 \begin{document}
+\maketitle
 
-\title[Depth of human reasoning from errors]{Errors reveal the depth of human reasoning}
+\paragraph{Author note.}\textit{Results report held-out analyses on the full dataset; strata
+and the primary interaction were fixed before held-out evaluation. Evaluation is split by
+player throughout.}
 
-\author*[1]{\fnm{Tamal} \sur{Maharaj}}\email{phy@gm.rkmvu.ac.in}
-\author[2]{\fnm{Kenneth W.} \sur{Regan}}\email{regan@buffalo.edu}
-
-\affil[1]{\orgname{Ramakrishna Mission Vivekananda Educational and Research Institute},
-\orgaddress{\city{Belur Math}, \state{West Bengal}, \country{India}}}
-\affil[2]{\orgdiv{Department of Computer Science and Engineering},
-\orgname{University at Buffalo (SUNY)}, \orgaddress{\city{Buffalo}, \state{New York}, \country{USA}}}
-
-\abstract{How deeply a person deliberates is central to theories of bounded
+\begin{abstract}
+\noindent How deeply a person deliberates is central to theories of bounded
 rationality, yet rarely measurable in natural behaviour. Here we show that the depth of human
 reasoning can be read from the structure of the mistakes people make. Using millions of
 skill-graded chess decisions scored against an engine at progressively deeper levels of
@@ -28,15 +32,8 @@ satisficing}. In slower time controls this depth rises with skill and collapses 
 pressure, vanishing in fast play. Fit without any timing information, it tracks how long players
 think, and it recovers the known depth of synthetic players. Incorporating it improves
 prediction of human moves where deep reasoning can vary. What people get wrong, more than what
-they get right, reveals how they think.}
-
-\keywords{bounded rationality, satisficing, depth of reasoning, decision-making, expertise, chess}
-
-\maketitle
-
-\paragraph{Author note.}\textit{Results report held-out analyses on the full dataset; strata
-and the primary interaction were fixed before held-out evaluation. Evaluation is split by player
-throughout. T.~Maharaj formerly published as T.~T.~Biswas.}
+they get right, reveals how they think.
+\end{abstract}
 
 \section{Introduction}
 A long tradition in the decision sciences holds that people do not optimise but
@@ -132,28 +129,6 @@ $p<10^{-200}$). A state-only model cannot produce this pattern. The gain further
 classical play it falls almost entirely on swing-up moves ($+0.048$ nats)---those whose worth
 appears only at depth---so the depth signal predicts precisely the choices a pattern model
 cannot.
-
-\paragraph{An item-response reading: positions are items, swing is discrimination.} These
-results admit a measurement-theoretic formulation that unifies them and places people and
-positions on \emph{one} scale. Treat each decision as a test item whose \emph{difficulty} is its
-\emph{critical depth}---the deepest search depth at which a misleading move still appears
-best---measured in plies, the same unit as the depth of satisficing; the item \emph{response} is
-the ordered severity of the move played (best / inaccuracy / mistake / blunder). An explanatory
-graded-response model \citep{samejima1969}, with item properties entered as engine-derived
-covariates rather than free per-item parameters to suit the one-player-per-position design (a
-linear logistic test model \citep{fischer1973}), recovers exactly the expected item-response
-structure: error severity falls with player ability ($\beta=-0.13$, $p<10^{-80}$), rises with
-item difficulty ($\beta=+0.06$, $p<10^{-24}$), and---decisively---ability is \emph{more}
-discriminating in high-swing positions (ability\,$\times$\,swing $\beta=-0.08$, $p<10^{-38}$).
-In the language of item-response theory, \emph{swing is item discrimination}: test information
-concentrates in high-swing decisions (Fig.~\ref{fig:f7}a), with the graded move-quality response
-shifting cleanly along the ability axis (Fig.~\ref{fig:f7}b)---which is precisely why skill is
-legible only in that small fraction of positions. The depth of satisficing thus
-reads as a latent \emph{ability} on a common ply ruler shared with item difficulty
-(Fig.~\ref{fig:f7}c)---a natural generalisation of rating systems, themselves a one-parameter
-item-response (Rasch) model on game \emph{outcomes} \citep{elo1978,rasch1960,embretson2000}. At
-the present decision density per player, ability is reliable only in aggregate; a person-dense,
-pool-invariant ability estimate is left to future work.
 
 \paragraph{Individual profiles separate expert styles.} Estimated per player from an
 \emph{elo-free} model (so recovering rating is not circular), a four-component profile---depth
@@ -302,7 +277,7 @@ cohort, carries no per-decision uncertainty, presupposes one time control, and--
 crossing is read from a polynomial fit---is sensitive to the fit, cohort depths shifting by
 $\approx\!1$~ply under reasonable fitting choices. We retain the same underlying signal (a
 played move whose error \emph{rises} as the engine looks deeper is exactly the move
-\emph{swing} of Biswas and Regan\citep{biswas2015}) but replace the crossing with the generative posterior
+\emph{swing} of \citealp{biswas2015}) but replace the crossing with the generative posterior
 $r_d$ above: a per-decision depth with credible intervals that supports the
 within-time-control and within-player contrasts used throughout and is identifiable against
 synthetic ground truth (Fig.~6). The population curve is stable only because it averages
@@ -313,19 +288,6 @@ and compressed toward the prior, which is why the convergent (Fig.~3) and identi
 stronger players satisfice deeper and err less---now established \emph{within} time control, at
 far larger scale, with win-probability (WDL) engine evaluation, a human-pattern prior, and a
 pre-registered out-of-sample replication.
-
-\paragraph{Item-response formulation.} Each decision is treated as an item. Item difficulty
-$b_j$ is the deepest grid depth at which the apparent-best move differs from the full-depth best
-move (critical depth, in plies); the ordered response is the played move's full-depth regret
-binned as best ($\le\!0.02$), inaccuracy ($\le\!0.05$), mistake ($\le\!0.10$), or blunder
-($>\!0.10$) in win-probability units. We fit an explanatory proportional-odds graded-response
-model \citep{samejima1969,fischer1973} with predictors ability (within-pool rating $z$),
-$b_j$, position swing, and an ability\,$\times$\,swing term; item properties enter as covariates
-rather than free per-item parameters because the natural-play design is sparse (most positions
-occur once). The model is fit on a random subsample for the MLE and the response curves computed
-on all decisions. Per-player ability has low split-half reliability at this decision density, so
-we report item-level and group-level (rating-band) effects and defer person-dense, pool-invariant
-ability estimation.
 
 \paragraph{Profiles and rating recovery.} Per player ($\ge100$ decisions): mean $\hat d$,
 trap-susceptibility (rate of played swing-down moves weighted by their shallow attractiveness),
@@ -407,16 +369,7 @@ $R^2\approx0$).}
 \caption{Synthetic-agent recovery: recovered vs.\ planted depth (ordinal; group Spearman $=1.0$).}
 \label{fig:f6}\end{figure}
 
-\begin{figure}[h]\centering\includegraphics[width=\linewidth]{figs/fig7_irt.png}
-\caption{Item-response view of the construct. (a) Probability of an error (not the best move)
-versus player ability, by position swing tercile: ability discriminates more steeply in
-high-swing positions---swing acts as item discrimination. (b) Graded-response operating curves:
-the probability of each move-quality category (best / inaccuracy / mistake / blunder) as a
-function of ability---P(best) rises and P(blunder) falls cleanly with skill. (c) Positions placed
-on the depth (ply) ruler by critical depth---the same scale on which the depth of satisficing
-measures person ability.}
-\label{fig:f7}\end{figure}
 
-
+\bibliographystyle{plainnat}
 \bibliography{refs}
 \end{document}

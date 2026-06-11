@@ -21,6 +21,7 @@ import yaml
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import figstyle  # noqa: F401  -- sets publication rcParams + palette on import
 from scipy.stats import spearmanr
 from torch.utils.data import TensorDataset, DataLoader
 
@@ -214,7 +215,7 @@ def e4(cfg):
     ax.set_ylabel("held-out NLL gain, fusion - Maia (nats)")
     ax.set_title("E4: depth helps only in slow, high-swing play")
     ax.legend(); ax.grid(alpha=.3, axis="y")
-    fig.tight_layout(); p = f"{FIGDIR}/fig4_prediction_gain.png"; fig.savefig(p, dpi=150)
+    fig.tight_layout(); p = f"{FIGDIR}/fig4_prediction_gain.png"; figstyle.save(fig, p)
     print(f"E4 -> {p}")
 
 
@@ -250,7 +251,7 @@ def e1(cfg):
     fig, ax = plt.subplots(1, 2, figsize=(11, 4.2), sharey=True)
     cmap = plt.cm.viridis(np.linspace(0, 1, len(BANDS)))
     for title, mask_sw, axi in [("all decisions", np.ones(len(y), bool), ax[0]),
-                                ("swing-down (informative)", sw == "down", ax[1])]:
+                                ("swing-up (deep-discovery, informative)", sw == "up", ax[1])]:
         for bi in range(len(BANDS)):
             sel = (bands == bi) & mask_sw
             if sel.sum() > 50:
@@ -259,11 +260,12 @@ def e1(cfg):
         axi.grid(alpha=.3)
     ax[0].set_ylabel("mean regret of played move (win-prob)")
     ax[1].legend(title="rating", fontsize=7, ncol=2)
-    fig.tight_layout(); p = f"{FIGDIR}/fig1_error_vs_depth.png"; fig.savefig(p, dpi=150)
+    figstyle.panel_label(ax[0], "a"); figstyle.panel_label(ax[1], "b")
+    fig.tight_layout(); p = f"{FIGDIR}/fig1_error_vs_depth.png"; figstyle.save(fig, p)
     # quantify: how much more rating-separated is swing-down at deep vs shallow?
     deep = -1
     print(f"E1 -> {p}")
-    for label, msk in [("all", np.ones(len(y), bool)), ("swing-down", sw == "down")]:
+    for label, msk in [("all", np.ones(len(y), bool)), ("swing-up", sw == "up")]:
         bm = np.array([pr[(bands == bi) & msk, deep].mean() for bi in range(len(BANDS))])
         print(f"  {label:11s} played-regret @depth{grid[deep]} by band: "
               + " ".join(f"{v:.3f}" for v in bm)
@@ -336,7 +338,8 @@ def e2(cfg):
     ax[1].plot(["Q1 (fast)", "Q2", "Q3", "Q4 (slow)"], binmeans, marker="o")
     ax[1].axhline(0, color="grey", lw=.7); ax[1].set_title("(b) within-player vs think-time")
     ax[1].set_ylabel("E[d] - player mean"); ax[1].grid(alpha=.3)
-    fig.tight_layout(); p = f"{FIGDIR}/fig2_depth_rating_time.png"; fig.savefig(p, dpi=150)
+    figstyle.panel_label(ax[0], "a"); figstyle.panel_label(ax[1], "b")
+    fig.tight_layout(); p = f"{FIGDIR}/fig2_depth_rating_time.png"; figstyle.save(fig, p)
     print(f"E2 -> {p}")
     print(f"E2b within-player de-meaned E[d] by think-time quartile: "
           + " ".join(f"{v:+.3f}" for v in binmeans) + "  (expect rising fast->slow)")
@@ -374,7 +377,7 @@ def e3(cfg):
     ax.axhline(0, color="grey", lw=.7); ax.set_ylabel("Spearman rho (E[d], think-time)")
     ax.set_title("E3: inferred depth vs real think-time\n(model fit without clock)")
     ax.grid(alpha=.3, axis="y")
-    fig.tight_layout(); p = f"{FIGDIR}/fig3_depth_vs_time.png"; fig.savefig(p, dpi=150)
+    fig.tight_layout(); p = f"{FIGDIR}/fig3_depth_vs_time.png"; figstyle.save(fig, p)
     print(f"E3 -> {p}")
 
 
@@ -430,7 +433,7 @@ def e6(cfg, syn_cfg_path="config_syn.yaml"):
     ax.set_xlabel("planted depth $d_{plant}$"); ax.set_ylabel("recovered depth E[d]")
     ax.set_title(f"E6 recovery: per-agent MAE={mae:.1f}, group $\\rho$={rho_g:.2f}")
     ax.legend(); ax.grid(alpha=.3)
-    fig.tight_layout(); p = f"{FIGDIR}/fig6_synthetic_recovery.png"; fig.savefig(p, dpi=150)
+    fig.tight_layout(); p = f"{FIGDIR}/fig6_synthetic_recovery.png"; figstyle.save(fig, p)
     print("E6 recovery (planted -> recovered E[d], per-agent mean±sd):")
     for d, m, s in zip(depths, gmean, gsd):
         print(f"   d_plant={d:2d} -> E[d]={m:5.2f} ± {s:.2f}")
@@ -479,6 +482,8 @@ def e5(cfg, min_dec=100):
     meta = blob["meta"]
     raw_players = np.array(meta["player"]); elo = np.array(meta["elo"]); src = np.array(meta["source"])
     swl = np.array(meta["swing"])                     # 'up'/'down'
+    tc = np.array(meta["time_class"])
+    dpool = np.where(src == "broadcast", "otb", tc)   # rating pool (Lichess Glicko per TC; OTB=FIDE)
 
     # Broadcast PGN names are fragmented ("Carlsen, Magnus" / "Magnus Carlsen" / "Carlsen Magnus
     # (NOR)" / "LevonAronian"...). Canonicalise elite identities to one key: drop federation tags
@@ -523,8 +528,12 @@ def e5(cfg, min_dec=100):
         if ok.sum() > 20 and np.std(xm[ok]) > 1e-6:        # guard constant/degenerate think-time
             xc = xm[ok] - xm[ok].mean(); yc = ym[ok] - ym[ok].mean()
             telas = float((xc @ yc) / (xc @ xc))           # OLS slope, no SVD
-        rows.append((p, elo[m].mean(), src[m][0] == "broadcast", depth, trap, disc, telas, m.sum()))
-    P = pd.DataFrame(rows, columns=["player", "rating", "elite", "depth", "trap", "disc", "telas", "n"])
+        modal = pd.Series(dpool[m]).mode().iloc[0]
+        rating = elo[m & (dpool == modal)].mean()     # single-pool (modal-control) rating
+        rows.append((p, rating, modal, src[m][0] == "broadcast", depth, trap, disc, telas, m.sum()))
+    P = pd.DataFrame(rows, columns=["player", "rating", "pool", "elite", "depth", "trap", "disc", "telas", "n"])
+    # Lichess ratings are pool-specific: recover rating WITHIN pool (z-scored per pool).
+    P["zrating"] = P.groupby("pool")["rating"].transform(lambda s: (s - s.mean()) / (s.std() + 1e-9))
     P["name"] = [p.replace("elite::", "").title() if p.startswith("elite::") else p for p in P["player"]]
     P.to_csv("data/player_profiles.csv", index=False)
     print(f"E5: {len(P)} players with >={min_dec} decisions ({P.elite.sum()} elite) -> data/player_profiles.csv")
@@ -538,10 +547,10 @@ def e5(cfg, min_dec=100):
             print(f"     {r['name'][:24].ljust(25)} rating={int(r['rating'])} n={int(r['n'])}  {zz}")
 
     feats = ["depth", "trap", "disc", "telas"]
-    X = P[feats].to_numpy(); t = P["rating"].to_numpy()
-    r2_1d = _ridge_cv(X, t, [0])                              # depth only
-    r2_full = _ridge_cv(X, t, [0, 1, 2, 3])                   # full profile
-    print(f"   rating recovery (nested-CV R^2): 1-D depth={r2_1d:.3f}  |  4-axis profile={r2_full:.3f}")
+    X = P[feats].to_numpy(); t = P["zrating"].to_numpy()     # within-pool z-scored rating target
+    r2_1d = _ridge_cv(X, t, [0])                             # depth only
+    r2_full = _ridge_cv(X, t, [0, 1, 2, 3])                  # full profile
+    print(f"   within-pool rating recovery (nested-CV R^2): 1-D depth={r2_1d:.3f}  |  4-axis profile={r2_full:.3f}")
 
     # elite case study: top players by #decisions
     el = P[P.elite].sort_values("n", ascending=False).head(6).copy()
@@ -566,9 +575,9 @@ def e5(cfg, min_dec=100):
                w, label=f"{r['name'][:16]} ({int(r['rating'])})")
     ax.set_xticks(np.arange(len(feats)) + 2.5*w); ax.set_xticklabels(feats)
     ax.axhline(0, color="grey", lw=.7); ax.set_ylabel("z vs population")
-    ax.set_title(f"E5 elite profiles (rating R^2: 1-D={r2_1d:.2f}, profile={r2_full:.2f})")
+    ax.set_title(f"E5 elite profiles (within-pool rating R$^2$: 1-D={r2_1d:.2f}, profile={r2_full:.2f})")
     ax.legend(fontsize=6, ncol=2); fig.tight_layout()
-    p = f"{FIGDIR}/fig5_player_profiles.png"; fig.savefig(p, dpi=150)
+    p = f"{FIGDIR}/fig5_player_profiles.png"; figstyle.save(fig, p)
     print(f"E5 -> {p}")
 
 

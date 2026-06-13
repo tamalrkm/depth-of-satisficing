@@ -11,7 +11,7 @@ inspected at any granularity.
 
 ## 0. Relationship to the prior pre-registration (integrity statement)
 This registration **does not alter or supersede** our earlier pre-registration (the Lichess
-**2026-05** replication; OSF DOI `<existing>`), which stands unchanged as the honest record of our
+**2026-05** replication; OSF DOI [10.17605/OSF.IO/KB4ZQ](https://doi.org/10.17605/OSF.IO/KB4ZQ)), which stands unchanged as the honest record of our
 first replication. On 2026-05 the non-circular results (H3, H4) held, but **(i)** the depth↑rating
 relationship held only in the slow time controls and **failed in blitz**, and **(ii)** the
 predicted *direction* of the single-decision rating-information effect (H5) was **mis-stated** — a

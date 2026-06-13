@@ -28,10 +28,12 @@ import matplotlib.pyplot as plt
 FIG = "paper/figs_irt"
 
 
-def main():
+def main(cfg_path="config.yaml"):
     import os
     os.makedirs(FIG, exist_ok=True)
-    cfg = yaml.safe_load(open("config.yaml"))
+    cfg = yaml.safe_load(open(cfg_path))
+    tag = "_chesscom" if "chesscom" in cfg_path else ("_2026_05" if "2026_05" in cfg_path else "")
+    print(f"POOL: {cfg_path}  (figure tag='{tag}')")
     grid = np.array(cfg["model"]["depth_grid"])
     blob = torch.load(cfg["data"]["train_tensor"])
     meta = blob["meta"]
@@ -111,15 +113,20 @@ def main():
     ax[2].set_xlabel("critical depth (plies)"); ax[2].set_ylabel("number of positions (items)")
     ax[2].set_title("(c) items on the depth ruler"); ax[2].grid(alpha=.3, axis="y")
     figstyle.panel_label(ax[2], "c")
-    fig.tight_layout(); p = f"{FIG}/irt_grm.png"; figstyle.save(fig, p)
+    fig.tight_layout(); p = f"{FIG}/irt_grm{tag}.png"; figstyle.save(fig, p)
     print(f"\n-> {p}")
 
-    # group-level ability validity (sidesteps low per-player reliability): severity falls with rating band
-    print("\nGROUP validity: mean severity by within-pool rating quintile (classical):")
-    cl = (pool == "classical") & np.isfinite(z)
-    q = np.digitize(z[cl], np.quantile(z[cl], [.2, .4, .6, .8]))
-    print("   " + "  ".join(f"Q{k+1}={sev[cl][q==k].mean():.3f}" for k in range(5)))
+    # group-level ability validity (sidesteps low per-player reliability): severity falls with rating band.
+    # Use the largest pool present (chess.com has no 'classical').
+    counts = {p: int(((pool == p) & np.isfinite(z)).sum()) for p in np.unique(pool)}
+    big = max(counts, key=counts.get)
+    cl = (pool == big) & np.isfinite(z)
+    print(f"\nGROUP validity: mean severity by within-pool rating quintile ({big}, n={cl.sum():,}):")
+    if cl.sum() > 100:
+        q = np.digitize(z[cl], np.quantile(z[cl], [.2, .4, .6, .8]))
+        print("   " + "  ".join(f"Q{k+1}={sev[cl][q==k].mean():.3f}" for k in range(5)))
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv[1] if len(sys.argv) > 1 else "config.yaml")

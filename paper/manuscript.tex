@@ -151,9 +151,13 @@ shifting cleanly along the ability axis (Fig.~\ref{fig:f7}b)---which is precisel
 legible only in that small fraction of positions. The depth of satisficing thus
 reads as a latent \emph{ability} on a common ply ruler shared with item difficulty
 (Fig.~\ref{fig:f7}c)---a natural generalisation of rating systems, themselves a one-parameter
-item-response (Rasch) model on game \emph{outcomes} \citep{elo1978,rasch1960,embretson2000}. At
-the present decision density per player, ability is reliable only in aggregate; a person-dense,
-pool-invariant ability estimate is left to future work.
+item-response (Rasch) model on game \emph{outcomes} \citep{elo1978,rasch1960,embretson2000}. This
+structure is not specific to one platform: on an independent sample of 99{,}358 chess.com
+decisions (945 players, a separate rating system), the same explanatory model reproduces every
+sign---ability $\beta=-0.08$, difficulty $\beta=+0.11$, swing $\beta=+0.87$, ability\,$\times$\,swing
+$\beta=-0.06$ (all $p<10^{-13}$)---so swing is item discrimination across rating systems, not a
+Lichess artefact. At the present decision density per player, ability is reliable only in
+aggregate; a person-dense, pool-invariant ability estimate is left to future work.
 
 \paragraph{Individual profiles separate expert styles.} Estimated per player from an
 \emph{elo-free} model (so recovering rating is not circular), a four-component profile---depth
@@ -359,14 +363,16 @@ results as confirmatory-on-held-out and label any post-hoc choices as explorator
 \paragraph{Data availability.} All game records derive from the public Lichess open database
 (\url{https://database.lichess.org}; months \texttt{2025-09} for the primary analysis and
 \texttt{2026-05} for the replication) and from openly licensed Lichess broadcast exports of
-over-the-board play. The derived analysis datasets---per-position engine depth trajectories,
+over-the-board play; the independent-pool item-response check uses public games retrieved via the
+chess.com Published-Data API (\url{https://api.chess.com}). The derived analysis datasets---per-position engine depth trajectories,
 Maia-3 policies, and the model tensors used for all results---are deposited at the Open Science
 Framework (OSF), \todo{insert OSF data DOI}.
 
 \paragraph{Code availability.} The analysis pipeline (engine driver, dataset builder, model,
 the confirmatory replication script, and all figure code) and configuration files are released
 under an open licence at \todo{insert code repository URL}; the pre-registration of the
-out-of-sample replication is archived in the same OSF project, \todo{insert OSF registration DOI}.
+out-of-sample replication is archived in the same OSF project (registration DOI
+\href{https://doi.org/10.17605/OSF.IO/KB4ZQ}{10.17605/OSF.IO/KB4ZQ}).
 The engine (Stockfish~18) and Maia-3 (\texttt{maia3-79m}) are third-party open-source software.
 
 \paragraph{Author contributions.} T.M. conceived the study, designed and implemented the

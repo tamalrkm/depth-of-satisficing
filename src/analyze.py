@@ -246,30 +246,32 @@ def e1(cfg):
     meta = blob["meta"]
     grid = cfg["model"]["depth_grid"]
     elo = np.array(meta["elo"]); sw = np.array(meta["swing"])
+    tc = np.array(meta["time_class"])
+    slow = np.isin(tc, ["classical", "rapid"])      # depth signal lives in slow play (within-TC rigor)
     pr = delta[np.arange(len(y)), y].numpy()        # [N, D] played-move regret on the grid
     bands = np.array([band_of(e) for e in elo])
-    fig, ax = plt.subplots(1, 2, figsize=(11, 4.2), sharey=True)
+    fig, ax = plt.subplots(1, 3, figsize=(15, 4.3), sharey=True)
     cmap = plt.cm.viridis(np.linspace(0, 1, len(BANDS)))
-    for title, mask_sw, axi in [("all decisions", np.ones(len(y), bool), ax[0]),
-                                ("swing-up (deep-discovery, informative)", sw == "up", ax[1])]:
+    panels = [("all decisions", np.ones(len(y), bool)),
+              ("swing-up (deep-discovery)", sw == "up"),
+              ("swing-down (traps)", sw == "down")]
+    print(f"E1 (slow controls, classical+rapid; n={int(slow.sum()):,}):")
+    for (title, msw), axi, lab in zip(panels, ax, "abc"):
+        m = msw & slow
         for bi in range(len(BANDS)):
-            sel = (bands == bi) & mask_sw
+            sel = (bands == bi) & m
             if sel.sum() > 50:
                 axi.plot(grid, pr[sel].mean(0), color=cmap[bi], label=f"{BAND_MID[bi]}")
-        axi.set_title(title); axi.set_xlabel("engine search depth")
-        axi.grid(alpha=.3)
+        axi.set_title(title); axi.set_xlabel("engine search depth"); axi.grid(alpha=.3)
+        figstyle.panel_label(axi, lab)
+        bm = np.array([pr[(bands == bi) & m, -1].mean() if ((bands == bi) & m).sum() > 50 else np.nan
+                       for bi in range(len(BANDS))])
+        print(f"  {title:28s} deep-regret by band: " + " ".join(f"{v:.3f}" for v in bm if not np.isnan(v))
+              + f"   (spread={np.nanmax(bm)-np.nanmin(bm):.3f})")
     ax[0].set_ylabel("mean regret of played move (win-prob)")
-    ax[1].legend(title="rating", fontsize=7, ncol=2)
-    figstyle.panel_label(ax[0], "a"); figstyle.panel_label(ax[1], "b")
+    ax[2].legend(title="rating", fontsize=7, ncol=2)
     fig.tight_layout(); p = f"{FIGDIR}/fig1_error_vs_depth.png"; figstyle.save(fig, p)
-    # quantify: how much more rating-separated is swing-down at deep vs shallow?
-    deep = -1
     print(f"E1 -> {p}")
-    for label, msk in [("all", np.ones(len(y), bool)), ("swing-up", sw == "up")]:
-        bm = np.array([pr[(bands == bi) & msk, deep].mean() for bi in range(len(BANDS))])
-        print(f"  {label:11s} played-regret @depth{grid[deep]} by band: "
-              + " ".join(f"{v:.3f}" for v in bm)
-              + f"   (spread hi-lo={bm.max()-bm.min():.3f})")
 
 
 def e2(cfg):

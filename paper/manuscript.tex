@@ -95,8 +95,9 @@ information is concentrated in the depth structure of mistakes, and specifically
 \emph{deep-discovery} choices: a single ``swing-up'' decision---a played move that looks
 unremarkable shallow but proves best only deeper---is several-fold more rating-predictive than a
 ``swing-down'' (trap) decision (pool-normalized single-decision $R^2\approx0.006$ vs.\ $0.003$;
-$\approx0.033$ vs.\ $0.009$ on the raw rating scale), with the same direction on the 2026-05
-replication. The signal lies in \emph{at what depth a move's worth appears}---the very swing-up
+$\approx0.033$ vs.\ $0.009$ on the raw rating scale; Fig.~\ref{fig:f1}b shows a clean rating fan
+for swing-up versus the bunched, overlapping bands for traps in Fig.~\ref{fig:f1}c), with the same
+direction on the 2026-05 replication. The signal lies in \emph{at what depth a move's worth appears}---the very swing-up
 choices on which the depth-aware model's predictive gain concentrates (below)---not in the size of
 the error.
 
@@ -392,10 +393,13 @@ voluntary online and broadcast play; it involves no intervention and no private 
 identifying data beyond the public usernames/player names attached to those records, and so
 did not require ethical approval.
 
-\begin{figure}[h]\centering\includegraphics[width=0.85\linewidth]{figs/fig1_error_vs_depth.png}
-\caption{Played-move regret across engine search depth, by rating band, for all decisions
-(left) and swing-up (deep-discovery) decisions (right), where the rating signal concentrates.
-Skill separates only at depth.}
+\begin{figure}[h]\centering\includegraphics[width=\linewidth]{figs/fig1_error_vs_depth.png}
+\caption{Played-move regret across engine search depth, by rating band, within the slow time
+controls (classical and rapid). (a) All decisions: skill separates only at depth. (b) Swing-up
+(deep-discovery) decisions: a clean, well-ordered rating fan---this is where the rating signal
+concentrates. (c) Swing-down (trap) decisions: bands are bunched and overlapping, separating
+$\sim\!2\times$ less. The rating axis runs from online play (lower bands) to elite over-the-board
+play (upper bands).}
 \label{fig:f1}\end{figure}
 \begin{figure}[h]\centering\includegraphics[width=0.85\linewidth]{figs/fig2_depth_rating_time.png}
 \caption{(a) Depth of satisficing vs.\ rating, within each time control (bullet is the flat

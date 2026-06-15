@@ -24,8 +24,8 @@ reasoning can be read from the structure of the mistakes people make. Using mill
 skill-graded chess decisions scored against an engine at progressively deeper levels of
 analysis, we find that players of different skill differ little on the moves they get right but
 are sharply separated by the depth at which their errors are exposed---the \emph{depth of
-satisficing}. In slower time controls this depth rises with skill and collapses under time
-pressure, vanishing in fast play. Fit without any timing information, it tracks how long players
+satisficing}. In slower time controls this depth rises with skill and weakens under time
+pressure, vanishing in the fastest play. Fit without any timing information, it tracks how long players
 think, and it recovers the known depth of synthetic players. Incorporating it improves
 prediction of human moves where deep reasoning can vary. What people get wrong, more than what
 they get right, reveals how they think.}
@@ -156,7 +156,8 @@ structure is not specific to one platform: on an independent sample of 99{,}358 
 decisions (945 players, a separate rating system), the same explanatory model reproduces every
 sign---ability $\beta=-0.08$, difficulty $\beta=+0.11$, swing $\beta=+0.87$, ability\,$\times$\,swing
 $\beta=-0.06$ (all $p<10^{-13}$)---so swing is item discrimination across rating systems, not a
-Lichess artefact. At the present decision density per player, ability is reliable only in
+Lichess artefact; the same holds on a second Lichess month (2026-04: ability\,$\times$\,swing
+$\beta=-0.09$, $p<10^{-40}$), i.e.\ across three independent pools. At the present decision density per player, ability is reliable only in
 aggregate; a person-dense, pool-invariant ability estimate is left to future work.
 
 \paragraph{Individual profiles separate expert styles.} Estimated per player from an
@@ -186,25 +187,28 @@ prior collapses the estimate toward its mean, which is why the rating relationsh
 must be corroborated by the non-circular tests above.
 
 \paragraph{Pre-registered out-of-sample replication.} We pre-registered \citep{nosek2018} the
-hypotheses, pipeline, and tests, then ran the identical pipeline once on an untouched month
-(Lichess 2026-05;
-$179{,}360$ decisions). The two non-circular results replicated: clock-free depth tracked thinking
-time, strongest in the middlegame (held-out $\rho=+0.30$ overall; opening $+0.32$, middlegame
-$+0.35$, endgame $+0.20$), and the registered swing\,$\times$\,time-control interaction held
-($+0.049$ nats, 95\% CI $[0.039,0.056]$; mixed-effects $p<10^{-36}$). Depth of satisficing rose
-with rating in classical ($\rho=+0.47$) and rapid ($+0.54$)---both stronger than in the primary
-month---and was null in bullet, but it did \emph{not} hold in blitz ($\rho\approx0$; inferred
-depth flat near $11.4$ plies across the entire rating range, at coverage equal to rapid). The
-rating--depth relationship is thus confined to the slow controls where depth can actually be
-deployed, and our pre-registered blitz prediction was too strong. The single-decision
-rating-information result replicated nearly identically on both months but \emph{opposite} to its
-pre-registered sign---swing-\emph{up} (deep-discovery), not swing-down (trap), decisions carry the
-information; the pre-registration mis-stated the sign (a swing-label convention corrected before
-analysis), and we report the corrected, internally consistent result (cf.\ the swing-up
-localisation of the predictive gain above). By the pre-registered criterion---all three primary
-hypotheses holding---the replication is \emph{not} declared a blanket success, because the blitz
-arm of the rating--depth relationship did not hold; the non-circular core (depth\,$\leftrightarrow$\,thinking
-time; the registered predictive interaction) and the construct's central claims replicated.
+hypotheses, pipeline, and tests, and confirmed them on two untouched Lichess months, each
+processed once by the frozen pipeline (2026-05, $179{,}360$ decisions, OSF
+\href{https://doi.org/10.17605/OSF.IO/KB4ZQ}{KB4ZQ}; 2026-04, $168{,}654$ decisions, OSF
+\href{https://doi.org/10.17605/OSF.IO/A6NYK}{A6NYK}); a third, fully prospective month (2026-06,
+registered before its data existed) is the registered primary and is pending. The two non-circular
+results replicated on both months: clock-free depth tracked thinking time, strongest in the
+middlegame (held-out $\rho=+0.30$ and $+0.40$; middlegame the peak in each), and the registered
+swing\,$\times$\,time-control interaction held ($+0.049$ and $+0.076$ nats; mixed-effects
+$p<10^{-36}$ and $p<10^{-48}$). Depth of satisficing rose with rating robustly in the slow
+controls---classical ($\rho=+0.47,+0.47$) and rapid ($+0.54,+0.54$) in both months as in the
+primary---and was null in \emph{bullet} throughout, a clean negative control. In \emph{blitz} the
+relationship was \emph{variable} across months ($\rho=+0.43,\approx0,+0.19$ in 2025-09 / 2026-05 /
+2026-04): a weak, unreliable fast-control effect rather than the strong slow-control one. We
+therefore report the rating--depth relationship as robust in classical and rapid, weak and
+variable in blitz, and absent in bullet (our first pre-registration's blitz prediction was too
+strong and the second's ``blitz null'' too weak; both deviations are reported). The single-decision
+rating-information result replicated on both months but \emph{opposite} to the first
+pre-registration's sign---swing-\emph{up} (deep-discovery), not swing-down (trap), decisions carry
+the information (a swing-label convention corrected before the second registration). The
+non-circular core and the construct's central claims thus hold across two independent months and,
+for the item-response structure, a second rating system (below); the prospective 2026-06 test will
+complete the registered confirmation.
 
 \section{Discussion}
 The errors people make are usually treated as noise. We find the opposite: where success is

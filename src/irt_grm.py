@@ -32,7 +32,8 @@ def main(cfg_path="config.yaml"):
     import os
     os.makedirs(FIG, exist_ok=True)
     cfg = yaml.safe_load(open(cfg_path))
-    tag = "_chesscom" if "chesscom" in cfg_path else ("_2026_05" if "2026_05" in cfg_path else "")
+    base = os.path.basename(cfg_path).replace("config", "").replace(".yaml", "").strip("_")
+    tag = ("_" + base) if base else ""    # config.yaml->'' ; config_2026_04.yaml->'_2026_04'
     print(f"POOL: {cfg_path}  (figure tag='{tag}')")
     grid = np.array(cfg["model"]["depth_grid"])
     blob = torch.load(cfg["data"]["train_tensor"])

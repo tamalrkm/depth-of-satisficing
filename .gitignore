@@ -17,3 +17,8 @@ paper/*.bbl
 paper/*.blg
 paper/*.log
 paper/*.out
+
+# Secrets — never commit
+OSF_TOKEN.txt
+*.token
+.env

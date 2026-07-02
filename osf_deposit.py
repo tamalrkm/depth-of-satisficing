@@ -8,6 +8,7 @@ Token read from OSF_TOKEN.txt (gitignored).
 import os
 import sys
 import requests
+from urllib.parse import urlsplit, urlunsplit, urlencode
 
 NODE = "ruhy8"
 TOK = open("OSF_TOKEN.txt").read().strip()
@@ -37,8 +38,18 @@ PLAN = {
 }
 
 
+def _base(url):
+    """Strip any query string; WaterButler upload links already carry ?kind=file."""
+    p = urlsplit(url)
+    return urlunsplit((p.scheme, p.netloc, p.path, "", ""))
+
+
+def _with(url, **params):
+    return _base(url) + "?" + urlencode(params)
+
+
 def list_dir(url):
-    r = requests.get(url, headers=H, timeout=120)
+    r = requests.get(_base(url), headers=H, timeout=120)
     r.raise_for_status()
     return {d["attributes"]["name"]: d for d in r.json()["data"]}
 
@@ -47,7 +58,7 @@ def ensure_folder(name):
     root = list_dir(WB)
     if name in root and root[name]["attributes"]["kind"] == "folder":
         return root[name]["links"]["upload"]
-    r = requests.put(WB + f"?kind=folder&name={name}", headers=H, timeout=120)
+    r = requests.put(_with(WB, kind="folder", name=name), headers=H, timeout=120)
     r.raise_for_status()
     return r.json()["data"]["links"]["upload"]
 
@@ -60,13 +71,12 @@ def upload(folder_url, path):
         print(f"  skip  {name:32s} ({sz/1048576:8.1f} MB, already present)", flush=True)
         return
     print(f"  PUT   {name:32s} ({sz/1048576:8.1f} MB) ...", end="", flush=True)
-    if name in existing:  # exists, different size -> overwrite via its own upload link
-        up = existing[name]["links"]["upload"]
-        with open(path, "rb") as f:
-            r = requests.put(up + "?kind=file", headers=H, data=f, timeout=3600)
-    else:
-        with open(path, "rb") as f:
-            r = requests.put(folder_url + f"?kind=file&name={name}", headers=H, data=f, timeout=3600)
+    if name in existing:  # exists, different size -> overwrite (new version) via its own link
+        url = _with(existing[name]["links"]["upload"], kind="file")
+    else:                 # new file into the folder
+        url = _with(folder_url, kind="file", name=name)
+    with open(path, "rb") as f:
+        r = requests.put(url, headers=H, data=f, timeout=3600)
     r.raise_for_status()
     print(" done", flush=True)
 

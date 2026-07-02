@@ -7,6 +7,7 @@ Token read from OSF_TOKEN.txt (gitignored).
 """
 import os
 import sys
+import time
 import requests
 from urllib.parse import urlsplit, urlunsplit, urlencode
 
@@ -48,8 +49,34 @@ def _with(url, **params):
     return _base(url) + "?" + urlencode(params)
 
 
+def _req(method, url, upload_path=None, timeout=120):
+    """HTTP with retry+backoff on transient 5xx / 429 / connection errors.
+    For uploads pass upload_path (reopened each attempt, since the body stream is consumed)."""
+    for attempt in range(6):
+        try:
+            if upload_path is not None:
+                with open(upload_path, "rb") as f:
+                    r = requests.request(method, url, headers=H, data=f, timeout=timeout)
+            else:
+                r = requests.request(method, url, headers=H, timeout=timeout)
+        except requests.exceptions.RequestException as e:
+            if attempt == 5:
+                raise
+            why = type(e).__name__
+        else:
+            if r.status_code < 500 and r.status_code != 429:
+                return r
+            if attempt == 5:
+                return r
+            why = f"HTTP {r.status_code}"
+        wait = min(2 ** attempt, 30)
+        print(f" [retry {attempt + 1}/6 after {why}; {wait}s]", end="", flush=True)
+        time.sleep(wait)
+    return r
+
+
 def list_dir(url):
-    r = requests.get(_base(url), headers=H, timeout=120)
+    r = _req("GET", _base(url))
     r.raise_for_status()
     return {d["attributes"]["name"]: d for d in r.json()["data"]}
 
@@ -58,7 +85,7 @@ def ensure_folder(name):
     root = list_dir(WB)
     if name in root and root[name]["attributes"]["kind"] == "folder":
         return root[name]["links"]["upload"]
-    r = requests.put(_with(WB, kind="folder", name=name), headers=H, timeout=120)
+    r = _req("PUT", _with(WB, kind="folder", name=name))
     r.raise_for_status()
     return r.json()["data"]["links"]["upload"]
 
@@ -75,8 +102,7 @@ def upload(folder_url, path):
         url = _with(existing[name]["links"]["upload"], kind="file")
     else:                 # new file into the folder
         url = _with(folder_url, kind="file", name=name)
-    with open(path, "rb") as f:
-        r = requests.put(url, headers=H, data=f, timeout=3600)
+    r = _req("PUT", url, upload_path=path, timeout=3600)
     r.raise_for_status()
     print(" done", flush=True)
 

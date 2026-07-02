@@ -39,13 +39,23 @@ echo "config=$CFG  month=$MONTH  repl_dir=$REPL  source=$SRC  dry_run=$DRY"
 mkdir -p "$REPL" "${REPL}/shards"
 [ "$DRY" = 1 ] || exec > >(tee -a "$LOG") 2>&1
 
+# Prefer a local dump (already copied to gdrive/ or data/raw/) over re-downloading 28 GB.
+DUMP=""
+for cand in "gdrive/lichess_db_standard_rated_${MONTH}.pgn.zst" \
+            "data/raw/lichess_db_standard_rated_${MONTH}.pgn.zst"; do
+  [ -f "$cand" ] && { DUMP="$cand"; break; }
+done
+
 banner "DOWNLOAD ($MONTH, src=$SRC)"
-if [ "$SRC" = hf ]; then
+if [ -n "$DUMP" ]; then
+  echo "  local dump found -> $DUMP (skipping download)"
+  PARSE_SRC=(--pgn "$DUMP")
+elif [ "$SRC" = hf ]; then
   run uv run python src/download_data.py --config "$CFG"
   PARSE_SRC=(--parquet "$HF_DIR")
 else
   run uv run python src/download_data.py --config "$CFG" --source http
-  PARSE_SRC=(--parquet "data/raw/lichess_db_standard_rated_${MONTH}.pgn.zst")
+  PARSE_SRC=(--pgn "data/raw/lichess_db_standard_rated_${MONTH}.pgn.zst")
 fi
 
 banner "PARSE"
@@ -54,12 +64,19 @@ run uv run python src/parse_games.py --config "$CFG" "${PARSE_SRC[@]}" --workers
 banner "SELECT (pass-through)"
 run uv run python src/select_positions.py --config "$CFG"
 
-if [ -d gdrive/broadcast ]; then
-  banner "BROADCAST PARSE + MERGE (elite-OTB stratum)"
-  run uv run python src/fetch_broadcasts.py --config "$CFG" --dir gdrive/broadcast --min-elo 2500 --max-elo 2900 --max-games 5000
+# Elite-OTB stratum: month-matched broadcast only (as in 2026-04/05), NOT the full archive.
+BC_DIR="gdrive/broadcast_${MONTH//-/_}"
+BC_MASTER="gdrive/broadcast/lichess_db_broadcast_${MONTH}.pgn.zst"
+if [ ! -d "$BC_DIR" ] && [ -f "$BC_MASTER" ]; then
+  echo "  building month-matched broadcast dir $BC_DIR (hardlink from archive)"
+  [ "$DRY" = 1 ] || { mkdir -p "$BC_DIR"; ln -f "$BC_MASTER" "$BC_DIR/"; }
+fi
+if [ -d "$BC_DIR" ] || [ -f "$BC_MASTER" ]; then
+  banner "BROADCAST PARSE + MERGE (elite-OTB stratum: $BC_DIR)"
+  run uv run python src/fetch_broadcasts.py --config "$CFG" --dir "$BC_DIR" --min-elo 2500 --max-elo 2900 --max-games 5000
   run uv run python src/fetch_broadcasts.py --config "$CFG" --merge
 else
-  echo "  (no gdrive/broadcast dir; skipping elite-OTB stratum)"
+  echo "  (no month-matched broadcast for $MONTH; skipping elite-OTB stratum)"
 fi
 
 banner "ENGINE (node-capped, workers from config -- the ~10h stage)"

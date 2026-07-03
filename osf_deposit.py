@@ -84,7 +84,19 @@ def list_dir(url):
 def ensure_folder(name):
     root = list_dir(WB)
     if name in root and root[name]["attributes"]["kind"] == "folder":
-        return root[name]["links"]["upload"]
+        link = root[name]["links"]["upload"]
+        # OSF can leave a broken folder that appears in the parent listing but 500s when
+        # listed itself (seen for a folder created during an interrupted run). Validate;
+        # if unlistable, delete + recreate. Safe because such a folder is empty.
+        try:
+            list_dir(link)
+            return link
+        except requests.exceptions.HTTPError:
+            print(f"  folder '{name}' is broken (unlistable) -> delete + recreate", flush=True)
+            try:
+                _req("DELETE", _base(root[name]["links"]["delete"]))
+            except requests.exceptions.RequestException:
+                pass
     r = _req("PUT", _with(WB, kind="folder", name=name))
     r.raise_for_status()
     return r.json()["data"]["links"]["upload"]
@@ -93,7 +105,10 @@ def ensure_folder(name):
 def upload(folder_url, path):
     name = os.path.basename(path)
     sz = os.path.getsize(path)
-    existing = list_dir(folder_url)
+    try:
+        existing = list_dir(folder_url)
+    except requests.exceptions.HTTPError:  # unlistable folder -> treat as empty, upload fresh
+        existing = {}
     if name in existing and existing[name]["attributes"].get("size") == sz:
         print(f"  skip  {name:32s} ({sz/1048576:8.1f} MB, already present)", flush=True)
         return

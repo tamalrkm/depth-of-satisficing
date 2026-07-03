@@ -59,7 +59,13 @@ else
 fi
 
 banner "PARSE"
-run uv run python src/parse_games.py --config "$CFG" "${PARSE_SRC[@]}" --workers 32 --fresh
+# --max-games caps the reservoir SCAN at 2.5M games (prereg protocol; 2026-04/05 used the
+# same cap). Without it the scan runs the whole ~90M-game month AND, because sampling is a
+# uniform reservoir, yields a different balanced sample -> not comparable across months.
+# NOTE: parse_games only parallelizes the PARQUET path; for a .pgn.zst the scan is
+# single-threaded, so --workers is intentionally omitted here.
+MAX_SCAN=2500000
+run uv run python src/parse_games.py --config "$CFG" "${PARSE_SRC[@]}" --max-games "$MAX_SCAN" --fresh
 
 banner "SELECT (pass-through)"
 run uv run python src/select_positions.py --config "$CFG"

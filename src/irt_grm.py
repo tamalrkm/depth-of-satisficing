@@ -84,7 +84,7 @@ def main(cfg_path="config.yaml"):
     print("   expect: ability<0, difficulty>0, ability_x_swing<0 (ability discriminates more in high-swing items)")
 
     # ---------- figure ----------
-    fig, ax = plt.subplots(1, 3, figsize=(15, 4.3))
+    fig, ax = plt.subplots(1, 3, figsize=(12.6, 3.7), constrained_layout=True)
     # (a) information: P(error = not best) vs ability, by swing tercile -> discrimination grows with swing
     err = (sev >= 1).astype(float)
     swt = np.digitize(tsw, np.quantile(tsw, [1/3, 2/3]))
@@ -92,29 +92,41 @@ def main(cfg_path="config.yaml"):
     for t, lab in [(0, "low swing"), (1, "mid swing"), (2, "high swing")]:
         m = s & (swt == t); bid = np.clip(np.digitize(z[m], zq[1:-1]), 0, 7)
         rate = np.array([err[m][bid == k].mean() if (bid == k).sum() > 30 else np.nan for k in range(8)])
-        ax[0].plot(zc, rate, marker="o", label=lab)
-    ax[0].set_xlabel("ability (within-pool rating z)"); ax[0].set_ylabel("P(error: not best move)")
-    ax[0].set_title("(a) discrimination grows with swing"); ax[0].legend(); ax[0].grid(alpha=.3)
+        col = figstyle.TERCILE_RAMP[t]
+        ax[0].plot(zc, rate, marker="o", color=col, zorder=3, **figstyle.ring())
+        okr = np.where(np.isfinite(rate))[0]
+        if len(okr):                              # direct label at each line end
+            figstyle.direct_label(ax[0], zc[okr[-1]], rate[okr[-1]], lab,
+                                  figstyle.TERCILE_RAMP[max(t, 1)], dx=5, weight="bold")
+    ax[0].set_xlabel("ability (within-pool rating z)")
+    ax[0].set_ylabel("P(played move is not best)")
+    ax[0].set_title("Discrimination grows with swing")
+    ax[0].set_xlim(right=zc[-1] + 1.15)
     figstyle.panel_label(ax[0], "a")
 
     # (b) graded-response operating curves: P(each severity category) vs ability
-    for k, lab, col in [(0, "best", "#0072B2"), (1, "inaccuracy", "#56B4E9"),
-                        (2, "mistake", "#E69F00"), (3, "blunder", "#D55E00")]:
+    for k, lab in [(0, "best"), (1, "inaccuracy"), (2, "mistake"), (3, "blunder")]:
         rate = np.array([(sev[s][np.clip(np.digitize(z[s], zq[1:-1]), 0, 7) == j] == k).mean()
                          if (np.clip(np.digitize(z[s], zq[1:-1]), 0, 7) == j).sum() > 30 else np.nan
                          for j in range(8)])
-        ax[1].plot(zc, rate, marker="o", color=col, label=lab)
-    ax[1].set_xlabel("ability (within-pool rating z)"); ax[1].set_ylabel("P(severity category)")
-    ax[1].set_title("(b) graded-response operating curves"); ax[1].legend(fontsize=7); ax[1].grid(alpha=.3)
-    figstyle.panel_label(ax[1], "b")
+        ax[1].plot(zc, rate, marker="o", color=figstyle.SEVERITY[lab], label=lab,
+                   zorder=3, **figstyle.ring())
+    ax[1].set_xlabel("ability (within-pool rating z)")
+    ax[1].set_ylabel("P(severity category)")
+    ax[1].set_title("Graded-response operating curves")
+    ax[1].legend(handlelength=1.4, labelspacing=0.3)
+    figstyle.panel_label(ax[1], "b", dx=-0.06)
 
     # (c) one ruler: item difficulty distribution on the ply scale (shared with depth-of-satisficing)
-    ax[2].hist(b_j, bins=np.array(grid) - 0.5 if False else np.arange(grid.min()-1, grid.max()+2, 2),
-               color="#0072B2", alpha=.8, edgecolor="white")
-    ax[2].set_xlabel("critical depth (plies)"); ax[2].set_ylabel("number of positions (items)")
-    ax[2].set_title("(c) items on the depth ruler"); ax[2].grid(alpha=.3, axis="y")
-    figstyle.panel_label(ax[2], "c")
-    fig.tight_layout(); p = f"{FIG}/irt_grm{tag}.png"; figstyle.save(fig, p)
+    ax[2].hist(b_j, bins=np.arange(grid.min() - 1, grid.max() + 2, 2),
+               color=figstyle.ACCENT, edgecolor="white", linewidth=1.2, zorder=3)
+    ax[2].set_xlabel("item difficulty: critical depth (plies)")
+    ax[2].set_ylabel("positions (items)")
+    ax[2].set_title("Items on the depth ruler")
+    ax[2].yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v/1000:g}k" if v else "0"))
+    ax[2].grid(axis="x", visible=False)
+    figstyle.panel_label(ax[2], "c", dx=-0.10)
+    p = f"{FIG}/irt_grm{tag}.png"; figstyle.save(fig, p)
     print(f"\n-> {p}")
 
     # group-level ability validity (sidesteps low per-player reliability): severity falls with rating band.

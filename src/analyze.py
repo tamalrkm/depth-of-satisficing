@@ -56,6 +56,7 @@ def load(cfg):
 
 def fit(mc, dev, delta, logq, mask, dmask, ctx, y, tr, freeze_beta=False, freeze_alpha=False):
     """Fit a SatisficingModel on the train rows; optionally freeze a gate off."""
+    torch.manual_seed(0)          # reproducible init + batch order: figures match reported text
     model = SatisficingModel(mc["depth_grid"], ctx.shape[-1], mc["hidden"]).to(dev)
     if freeze_beta:
         model._beta.data.fill_(FREEZE); model._beta.requires_grad_(False)
@@ -204,18 +205,29 @@ def e4(cfg):
         print(f"\nmixed-effects fit failed: {e}")
 
     # --- Fig4: gain by time control x swing magnitude ---
-    fig, ax = plt.subplots(figsize=(6, 4.2))
+    fig, ax = plt.subplots(figsize=(5.4, 3.4), constrained_layout=True)
     tcs = ["classical", "rapid", "blitz", "bullet"]
     himeans = [d_gap[(tc == t) & hi].mean() for t in tcs]
     lomeans = [d_gap[(tc == t) & ~hi].mean() for t in tcs]
     xx = np.arange(len(tcs))
-    ax.bar(xx - 0.2, himeans, 0.38, label="high-swing", color="navy")
-    ax.bar(xx + 0.2, lomeans, 0.38, label="low-swing", color="silver")
-    ax.axhline(0, color="grey", lw=.7); ax.set_xticks(xx); ax.set_xticklabels(tcs)
-    ax.set_ylabel("held-out NLL gain, fusion - Maia (nats)")
-    ax.set_title("E4: depth helps only in slow, high-swing play")
-    ax.legend(); ax.grid(alpha=.3, axis="y")
-    fig.tight_layout(); p = f"{FIGDIR}/fig4_prediction_gain.png"; figstyle.save(fig, p)
+    bh = ax.bar(xx - 0.19, himeans, 0.34, label="high-swing positions",
+                color=figstyle.ACCENT, edgecolor="white", linewidth=1.2, zorder=3)
+    bl = ax.bar(xx + 0.19, lomeans, 0.34, label="low-swing positions",
+                color=figstyle.ACCENT_LIGHT, edgecolor="white", linewidth=1.2, zorder=3)
+    figstyle.zero_line(ax)
+    for bars in (bh, bl):                      # value at every tip: only 8 bars, all read
+        for b in bars:
+            v = b.get_height()
+            ax.annotate(f"{v:+.3f}", (b.get_x() + b.get_width() / 2, v),
+                        xytext=(0, 3 if v >= 0 else -3), textcoords="offset points",
+                        ha="center", va="bottom" if v >= 0 else "top",
+                        fontsize=7, color=figstyle.INK2)
+    ax.set_xticks(xx); ax.set_xticklabels(tcs)
+    ax.set_ylabel("held-out gain over state-only model\n(Δ NLL, nats)")
+    ax.margins(y=0.18)
+    ax.grid(axis="x", visible=False)
+    ax.legend(loc="upper right", handlelength=1.2, handleheight=1.0)
+    p = f"{FIGDIR}/fig4_prediction_gain.png"; figstyle.save(fig, p)
     print(f"E4 -> {p}")
 
 
@@ -250,27 +262,39 @@ def e1(cfg):
     slow = np.isin(tc, ["classical", "rapid"])      # depth signal lives in slow play (within-TC rigor)
     pr = delta[np.arange(len(y)), y].numpy()        # [N, D] played-move regret on the grid
     bands = np.array([band_of(e) for e in elo])
-    fig, ax = plt.subplots(1, 3, figsize=(15, 4.3), sharey=True)
-    cmap = plt.cm.viridis(np.linspace(0, 1, len(BANDS)))
-    panels = [("all decisions", np.ones(len(y), bool)),
-              ("swing-up (deep-discovery)", sw == "up"),
-              ("swing-down (traps)", sw == "down")]
+    band_names = [f"{lo}–{hi}" for lo, hi in BANDS[:-1]] + ["2600+"]
+    fig, ax = plt.subplots(1, 3, figsize=(12.6, 3.9), sharey=True, constrained_layout=True)
+    panels = [("All decisions", np.ones(len(y), bool)),
+              ("Swing-up (deep discovery)", sw == "up"),
+              ("Swing-down (traps)", sw == "down")]
     print(f"E1 (slow controls, classical+rapid; n={int(slow.sum()):,}):")
-    for (title, msw), axi, lab in zip(panels, ax, "abc"):
+    for pi, ((title, msw), axi, lab) in enumerate(zip(panels, ax, "abc")):
         m = msw & slow
         for bi in range(len(BANDS)):
             sel = (bands == bi) & m
             if sel.sum() > 50:
-                axi.plot(grid, pr[sel].mean(0), color=cmap[bi], label=f"{BAND_MID[bi]}")
-        axi.set_title(title); axi.set_xlabel("engine search depth"); axi.grid(alpha=.3)
-        figstyle.panel_label(axi, lab)
+                extreme = bi in (0, len(BANDS) - 1)
+                curve = pr[sel].mean(0)
+                axi.plot(grid, curve, color=figstyle.BAND_RAMP[bi],
+                         lw=2.3 if extreme else 1.7, label=band_names[bi], zorder=3)
+                if pi == 1 and extreme:      # direct-label the ramp extremes once, panel b
+                    figstyle.direct_label(axi, grid[-1], curve[-1], band_names[bi],
+                                          figstyle.BAND_RAMP[max(bi, 3)], dx=5,
+                                          weight="bold")
+        axi.set_title(title)
+        axi.set_xlabel("engine search depth (plies)")
+        axi.set_xticks([2, 6, 10, 14, 18, 22])
+        figstyle.panel_label(axi, lab, dx=-0.14 if pi == 0 else -0.06)
         bm = np.array([pr[(bands == bi) & m, -1].mean() if ((bands == bi) & m).sum() > 50 else np.nan
                        for bi in range(len(BANDS))])
         print(f"  {title:28s} deep-regret by band: " + " ".join(f"{v:.3f}" for v in bm if not np.isnan(v))
               + f"   (spread={np.nanmax(bm)-np.nanmin(bm):.3f})")
-    ax[0].set_ylabel("mean regret of played move (win-prob)")
-    ax[2].legend(title="rating", fontsize=7, ncol=2)
-    fig.tight_layout(); p = f"{FIGDIR}/fig1_error_vs_depth.png"; figstyle.save(fig, p)
+    ax[1].set_xlim(right=grid[-1] + 3.6)     # room for the direct labels
+    ax[0].set_ylabel("mean regret of played move\n(win probability)")
+    leg = ax[2].legend(title="rating band", ncol=2, loc="upper left",
+                       handlelength=1.4, columnspacing=1.0, labelspacing=0.3)
+    leg.get_title().set_fontsize(8)
+    p = f"{FIGDIR}/fig1_error_vs_depth.png"; figstyle.save(fig, p)
     print(f"E1 -> {p}")
 
 
@@ -291,11 +315,12 @@ def e2(cfg):
 
     # Fig2a: depth vs rating WITHIN each time control (pooling confounds skill with clock,
     # since elite/high-rated play is mostly classical). Bullet is the natural negative control.
-    fig, ax = plt.subplots(1, 2, figsize=(11, 4.2))
+    fig, ax = plt.subplots(1, 2, figsize=(9.6, 3.8), constrained_layout=True,
+                           gridspec_kw={"width_ratios": [1.35, 1]})
     rng = np.random.default_rng(0)
     print(f"E2a depth vs rating, WITHIN time control (pooled rho={spearmanr(elo[vidx], dh).correlation:+.3f}, confounded):")
-    colors = {"classical": "navy", "rapid": "teal", "blitz": "darkorange", "bullet": "grey"}
-    for t in ["classical", "rapid", "blitz", "bullet"]:
+    ends = []                                     # (end_x, end_y, label, colour) for direct labels
+    for t in figstyle.TC_ORDER:
         tsel = vtc == t
         means, los, his = [], [], []
         for bi in range(len(BANDS)):
@@ -307,18 +332,31 @@ def e2(cfg):
             means.append(pmean.mean())
             bs = pmean[rng.integers(0, len(pmean), size=(1000, len(pmean)))].mean(1)
             los.append(np.percentile(bs, 2.5)); his.append(np.percentile(bs, 97.5))
-        means = np.array(means)
+        means, los, his = np.array(means), np.array(los), np.array(his)
         rho = spearmanr(elo[vidx][tsel], dh[tsel]).correlation
-        lab = f"{t} (rho={rho:+.2f})" + ("  [control]" if t == "bullet" else "")
         ok = ~np.isnan(means)
-        ax[0].errorbar(np.array(BAND_MID)[ok], means[ok],
-                       yerr=[(means-np.array(los))[ok], (np.array(his)-means)[ok]],
-                       marker="o", capsize=2, color=colors[t], label=lab)
+        col = figstyle.TC_COLORS[t]
+        xs = np.array(BAND_MID)[ok]
+        ax[0].fill_between(xs, los[ok], his[ok], color=col, alpha=0.18, lw=0, zorder=2)
+        ax[0].plot(xs, means[ok], marker="o", color=col, zorder=3,
+                   **figstyle.ring())
+        ends.append((xs[-1], means[ok][-1],
+                     t + (" (control)" if t == "bullet" else ""), col))
         print(f"   {t:10s} n={tsel.sum():>6d}  Spearman={rho:+.3f}  "
               f"per-band E[d]: " + " ".join(f"{m:.2f}" for m in means if not np.isnan(m)))
-    ax[0].set_xlabel("rating"); ax[0].set_ylabel("depth of satisficing  E[d]")
-    ax[0].set_title("(a) depth rises with skill, within time control"); ax[0].grid(alpha=.3)
-    ax[0].legend(fontsize=7)
+    # direct labels at line ends, staggered so converging series stay attached & legible
+    ends.sort(key=lambda e: e[1])
+    last_y = -1e9
+    for ex, ey, lab, col in ends:
+        ly = max(ey, last_y + 0.32)               # >= 0.32 plies apart on the E[d] axis
+        figstyle.direct_label(ax[0], ex, ly, lab,
+                              col if lab.startswith(("classical", "rapid")) else figstyle.INK2,
+                              dx=6, weight="bold" if lab.startswith(("classical", "rapid")) else "regular")
+        last_y = ly
+    ax[0].set_xlim(right=BAND_MID[-1] + 60)
+    ax[0].set_xlabel("rating (per-control bands)")
+    ax[0].set_ylabel("depth of satisficing, E[d] (plies)")
+    ax[0].set_title("Depth of satisficing by rating band")
 
     # Fig2b: within-player time-pressure effect. Need think-time -> join selected by pos_id.
     sel_df = pd.read_parquet(cfg["data"]["selected"], columns=["pos_id", "time_spent"]).set_index("pos_id")
@@ -336,12 +374,33 @@ def e2(cfg):
     valid = np.isfinite(dq) & np.isfinite(tt)
     quart = np.quantile(tt[valid], [.25, .5, .75])
     q[valid] = np.digitize(tt[valid], quart)
-    binmeans = [dq[valid & (q == k)].mean() for k in range(4)]
-    ax[1].plot(["Q1 (fast)", "Q2", "Q3", "Q4 (slow)"], binmeans, marker="o")
-    ax[1].axhline(0, color="grey", lw=.7); ax[1].set_title("(b) within-player vs think-time")
-    ax[1].set_ylabel("E[d] - player mean"); ax[1].grid(alpha=.3)
+    binmeans = np.array([dq[valid & (q == k)].mean() for k in range(4)])
+    # player-clustered bootstrap CI around the same pooled quartile means
+    vv = np.where(valid)[0]
+    pl_v = vpl[vv]; qq_v = q[vv]; dq_v = dq[vv]
+    plv = np.unique(pl_v)
+    rows_of = {p: np.where(pl_v == p)[0] for p in plv}
+    boots = np.full((1000, 4), np.nan)
+    for b in range(1000):
+        take = np.concatenate([rows_of[p] for p in rng.choice(plv, len(plv), replace=True)])
+        for k in range(4):
+            mk = qq_v[take] == k
+            if mk.sum():
+                boots[b, k] = dq_v[take][mk].mean()
+    lo, hi_ = np.nanpercentile(boots, [2.5, 97.5], axis=0)
+    xx = np.arange(4)
+    ax[1].errorbar(xx, binmeans, yerr=[binmeans - lo, hi_ - binmeans],
+                   fmt="o", color=figstyle.ACCENT, ecolor=figstyle.ACCENT,
+                   elinewidth=1.6, capsize=0, markersize=7, zorder=3,
+                   **figstyle.ring())
+    ax[1].plot(xx, binmeans, color=figstyle.ACCENT, lw=1.4, alpha=0.55, zorder=2)
+    figstyle.zero_line(ax[1])
+    ax[1].set_xticks(xx); ax[1].set_xticklabels(["Q1\n(fastest)", "Q2", "Q3", "Q4\n(slowest)"])
+    ax[1].set_xlabel("think-time quartile")
+    ax[1].set_ylabel("Δ E[d] within player (plies)")
+    ax[1].set_title("Within-player effect of think time")
     figstyle.panel_label(ax[0], "a"); figstyle.panel_label(ax[1], "b")
-    fig.tight_layout(); p = f"{FIGDIR}/fig2_depth_rating_time.png"; figstyle.save(fig, p)
+    p = f"{FIGDIR}/fig2_depth_rating_time.png"; figstyle.save(fig, p)
     print(f"E2 -> {p}")
     print(f"E2b within-player de-meaned E[d] by think-time quartile: "
           + " ".join(f"{v:+.3f}" for v in binmeans) + "  (expect rising fast->slow)")
@@ -367,19 +426,32 @@ def e3(cfg):
     ok = np.isfinite(tspent) & (tspent > 0)
     phases = [("opening", ply <= 24), ("middlegame", (ply > 24) & (ply <= 60)),
               ("endgame", ply > 60), ("all", np.ones(len(dh), bool))]
-    fig, ax = plt.subplots(figsize=(5.5, 4.2))
     print("E3 Spearman(E[d] [clock-free], think-time), held out:")
+    rhos = {}
     for name, pmask in phases:
         m = ok & pmask
         if m.sum() > 100:
-            rho = spearmanr(dh[m], tspent[m]).correlation
-            print(f"   {name:11s} rho={rho:+.3f}  (n={m.sum()})")
-            if name != "all":
-                ax.bar(name, rho)
-    ax.axhline(0, color="grey", lw=.7); ax.set_ylabel("Spearman rho (E[d], think-time)")
-    ax.set_title("E3: inferred depth vs real think-time\n(model fit without clock)")
-    ax.grid(alpha=.3, axis="y")
-    fig.tight_layout(); p = f"{FIGDIR}/fig3_depth_vs_time.png"; figstyle.save(fig, p)
+            rhos[name] = spearmanr(dh[m], tspent[m]).correlation
+            print(f"   {name:11s} rho={rhos[name]:+.3f}  (n={m.sum()})")
+    fig, ax = plt.subplots(figsize=(4.6, 2.6), constrained_layout=True)
+    names = [n for n in ("opening", "middlegame", "endgame") if n in rhos]
+    vals = [rhos[n] for n in names]
+    yy = np.arange(len(names))[::-1]
+    ax.barh(yy, vals, height=0.46, color=figstyle.ACCENT,
+            edgecolor="white", linewidth=1.0, zorder=3)
+    for yv, v in zip(yy, vals):                       # value inside each bar tip (white on blue)
+        ax.annotate(f"+{v:.2f}", (v, yv), xytext=(-5, 0), textcoords="offset points",
+                    ha="right", va="center", fontsize=8, color="white", zorder=4)
+    if "all" in rhos:                                  # all-phases reference
+        ax.axvline(rhos["all"], color=figstyle.MUTED, lw=1.0, ls=(0, (4, 3)), zorder=2)
+        ax.annotate(f"all phases +{rhos['all']:.2f}", (rhos["all"], len(names) - 0.42),
+                    xytext=(0, 6), textcoords="offset points", ha="center",
+                    fontsize=7.5, color=figstyle.MUTED, annotation_clip=False)
+    ax.set_yticks(yy); ax.set_yticklabels(names)
+    ax.set_xlim(0, max(vals) * 1.22)
+    ax.set_xlabel("Spearman ρ  (clock-free E[d]  vs  observed think time)")
+    ax.grid(axis="y", visible=False)
+    p = f"{FIGDIR}/fig3_depth_vs_time.png"; figstyle.save(fig, p)
     print(f"E3 -> {p}")
 
 
@@ -426,16 +498,21 @@ def e6(cfg, syn_cfg_path="config_syn.yaml"):
     rho = spearmanr(rec_pl, rec).correlation
     rho_g = spearmanr(depths, gmean).correlation
 
-    fig, ax = plt.subplots(figsize=(5.4, 5))
+    fig, ax = plt.subplots(figsize=(4.4, 4.1), constrained_layout=True)
     lim = [min(depths) - 2, max(depths) + 2]
-    ax.plot(lim, lim, "--", color="grey", label="identity")
+    ax.plot(lim, lim, ls=(0, (4, 3)), lw=1.2, color=figstyle.MUTED, label="identity", zorder=2)
     ax.scatter(rec_pl + np.random.default_rng(0).normal(0, .15, len(rec_pl)), rec,
-               s=6, alpha=.15, color="steelblue")
-    ax.errorbar(depths, gmean, yerr=gsd, marker="o", color="navy", capsize=3, label="recovered E[d] (mean±sd)")
-    ax.set_xlabel("planted depth $d_{plant}$"); ax.set_ylabel("recovered depth E[d]")
-    ax.set_title(f"E6 recovery: per-agent MAE={mae:.1f}, group $\\rho$={rho_g:.2f}")
-    ax.legend(); ax.grid(alpha=.3)
-    fig.tight_layout(); p = f"{FIGDIR}/fig6_synthetic_recovery.png"; figstyle.save(fig, p)
+               s=11, alpha=.30, color=figstyle.ACCENT_LIGHT, lw=0, zorder=3,
+               label="individual agents")
+    ax.errorbar(depths, gmean, yerr=gsd, marker="o", color=figstyle.ACCENT_DARK,
+                elinewidth=1.6, capsize=0, markersize=7, lw=2.0, zorder=4,
+                label="mean ± s.d. per planted depth", **figstyle.ring())
+    ax.set_xlabel("planted depth, $d_\\mathrm{plant}$ (plies)")
+    ax.set_ylabel("recovered depth, E[d] (plies)")
+    ax.set_xticks(depths)
+    ax.set_yticks(range(4, 22, 4))
+    ax.legend(loc="upper left", handlelength=1.4)
+    p = f"{FIGDIR}/fig6_synthetic_recovery.png"; figstyle.save(fig, p)
     print("E6 recovery (planted -> recovered E[d], per-agent mean±sd):")
     for d, m, s in zip(depths, gmean, gsd):
         print(f"   d_plant={d:2d} -> E[d]={m:5.2f} ± {s:.2f}")
@@ -569,16 +646,29 @@ def e5(cfg, min_dec=100):
                      if el_d.index(el_r[i]) > el_d.index(el_r[j]))
     print(f"   1-D depth-score vs true-rating order: {disc_pairs} discordant pairs / {len(el_r)*(len(el_r)-1)//2}")
 
-    # Fig5: z-scored radar-ish bar profiles for the elite
-    fig, ax = plt.subplots(figsize=(8, 4.2))
-    w = 0.13
-    for i, (_, r) in enumerate(el.iterrows()):
-        ax.bar(np.arange(len(feats)) + i*w, [(r[f]-z[f][0])/z[f][1] for f in feats],
-               w, label=f"{r['name'][:16]} ({int(r['rating'])})")
-    ax.set_xticks(np.arange(len(feats)) + 2.5*w); ax.set_xticklabels(feats)
-    ax.axhline(0, color="grey", lw=.7); ax.set_ylabel("z vs population")
-    ax.set_title(f"E5 elite profiles (within-pool rating R$^2$: 1-D={r2_1d:.2f}, profile={r2_full:.2f})")
-    ax.legend(fontsize=6, ncol=2); fig.tight_layout()
+    # Fig5: dot-plot small multiples -- one panel per profile axis, elite players on a shared
+    # rating-ordered y axis. Identity comes from the row label, so no colour legend is needed.
+    def surname(name):
+        toks = name.split()
+        return max(toks, key=len).title() if toks else name
+    el = el.sort_values("rating", ascending=True).reset_index(drop=True)   # top player on top row
+    ylabels = [f"{surname(r['name'])}  ({int(r['rating'])})" for _, r in el.iterrows()]
+    axis_titles = [("depth", "depth of\nsatisficing"), ("trap", "trap\nsusceptibility"),
+                   ("disc", "deep-discovery\nrate"), ("telas", "time\nelasticity")]
+    fig, axes = plt.subplots(1, 4, figsize=(9.8, 2.9), sharey=True, constrained_layout=True)
+    yy = np.arange(len(el))
+    for axi, (f, ttl) in zip(axes, axis_titles):
+        zs = np.array([(r[f] - z[f][0]) / z[f][1] for _, r in el.iterrows()])
+        figstyle.zero_line(axi, axis="x")
+        axi.hlines(yy, 0, zs, color=figstyle.ACCENT_LIGHT, lw=1.4, zorder=2)
+        axi.plot(zs, yy, "o", color=figstyle.ACCENT, markersize=7.5, zorder=3,
+                 **figstyle.ring())
+        axi.set_title(ttl, fontsize=8.5)
+        axi.set_xlabel("z vs population", fontsize=7.5)
+        lim = max(1.0, np.abs(zs).max() * 1.25)
+        axi.set_xlim(-lim, lim)
+        axi.grid(axis="y", visible=False)
+    axes[0].set_yticks(yy); axes[0].set_yticklabels(ylabels, fontsize=8)
     p = f"{FIGDIR}/fig5_player_profiles.png"; figstyle.save(fig, p)
     print(f"E5 -> {p}")
 

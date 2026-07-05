@@ -31,6 +31,10 @@ PLAN = {
         "data/repl04/selected.parquet", "data/repl04/depth_traj.parquet",
         "data/repl04/maia_q.parquet", "data/repl04/train.pt",
     ],
+    "replication-2026-06": [        # prospective A6NYK primary (D1), REPLICATION SUCCESSFUL
+        "data/repl06/selected.parquet", "data/repl06/depth_traj.parquet",
+        "data/repl06/maia_q.parquet", "data/repl06/train.pt",
+    ],
     "chesscom": [
         "data/chesscom/selected.parquet", "data/chesscom/depth_traj.parquet",
         "data/chesscom/maia_q.parquet", "data/chesscom/train.pt",

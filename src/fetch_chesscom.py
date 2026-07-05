@@ -25,7 +25,7 @@ import chess.pgn
 import numpy as np
 import pandas as pd
 
-UA = "depth-of-satisficing-research/1.0 (mailto:phy@gm.rkmvu.ac.in)"
+UA = "depth-of-satisficing-research/1.0 (mailto:tamal@gm.rkmvu.ac.in)"
 BASE = "https://api.chess.com/pub"
 TC_KEEP = {"bullet", "blitz", "rapid"}          # real-time only (skip 'daily' correspondence)
 MIN_PLY, MAX_PLY = 9, 120

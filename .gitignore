@@ -22,3 +22,6 @@ paper/*.out
 OSF_TOKEN.txt
 *.token
 .env
+
+# local share archives (never commit)
+depth-of-satisficing-*.zip

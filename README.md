@@ -90,4 +90,4 @@ Maharaj, T. ([ORCID 0009-0001-5835-8967](https://orcid.org/0009-0001-5835-8967))
 T. Maharaj formerly published as T. T. Biswas.
 
 ## License
-Code: _TBD_ (suggest MIT/Apache-2.0). Data: CC-BY (matching the pre-registration).
+Code: [MIT](LICENSE). Data: CC-BY (matching the pre-registration).

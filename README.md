@@ -77,12 +77,16 @@ chess.com pipeline: `fetch_chesscom.py` → same `run_engine`/`maia_features`/`b
 | `diag.py`, `maia_otb_match.py`, `maia_otb_traps.py` | diagnostics / internal probes |
 
 ## Data & code availability
-Derived datasets are deposited on OSF (see `DATA_MANIFEST.md` for files, schemas, sizes, and
-provenance). Raw sources are public: Lichess open database (CC0), Lichess broadcast exports, and
+Derived datasets are deposited on OSF ([osf.io/ruhy8](https://osf.io/ruhy8); see
+`DATA_MANIFEST.md` for files, schemas, sizes, and provenance). The pre-registered replication
+protocol is archived at DOI [10.17605/OSF.IO/A6NYK](https://doi.org/10.17605/OSF.IO/A6NYK)
+(first registration: [10.17605/OSF.IO/KB4ZQ](https://doi.org/10.17605/OSF.IO/KB4ZQ)).
+Raw sources are public: Lichess open database (CC0), Lichess broadcast exports, and
 the chess.com Published-Data API.
 
 ## Citing
-Maharaj, T. & Regan, K. W. *Errors reveal the depth of human reasoning.* (in prep).
+Maharaj, T. ([ORCID 0009-0001-5835-8967](https://orcid.org/0009-0001-5835-8967)) & Regan, K. W.
+*Errors reveal the depth of human reasoning.* (in prep).
 T. Maharaj formerly published as T. T. Biswas.
 
 ## License

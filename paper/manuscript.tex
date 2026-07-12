@@ -11,6 +11,7 @@
 
 \title[Depth of human reasoning from errors]{Errors reveal the depth of human reasoning}
 
+% >>> REV-COAUTHOR (Jul 2026): ORCIDs added for both authors. <<<
 \author*[1]{\fnm{Tamal} \sur{Maharaj}\,\orcidlink{0009-0001-5835-8967}}\email{tamal@gm.rkmvu.ac.in}
 \author[2]{\fnm{Kenneth W.} \sur{Regan}\,\orcidlink{0000-0002-7382-7178}}\email{regan@buffalo.edu}
 
@@ -92,23 +93,31 @@ final, registered confirmation succeeded on all three primary hypotheses.
 
 \section{Results}
 
+% >>> REV-COAUTHOR (Jul 2026): paragraph ADDED after K.W.R. review -- primer on iterative
+% deepening / evaluation trajectories / formal swing definition, keyed to new Fig 1a. <<<
 \paragraph{Reading a decision at increasing depth.}
 A chess engine evaluates by \emph{iterative deepening}: it scores every candidate move
 looking one ply (half-move) ahead, then two, and so on, revising each move's evaluation at
-every new horizon. A move's value is therefore not a number but a \emph{trajectory} across
+every new horizon; evaluations change with depth because deeper search uncovers consequences
+that shallower search cannot see---the game-tree analogue of thinking further ahead. A
+move's value is therefore not a number but a \emph{trajectory} across
 depth, and that trajectory is our raw material. Figure~\ref{fig:f1}a shows a real decision
 from the data. A 1910-rated player, offered a bishop, recaptured it (fxe6): at shallow depth
 the capture looks close to winning, but from about eight plies the refutation comes into
 view and its value collapses. The quiet king move Kb8 shows the opposite signature---
-unimpressive at a glance, it proves best once the search runs deep. We call the signed area
+unimpressive at a glance, it proves best once the search runs deep. Writing $\delta_{m,d}$
+for move $m$'s \emph{regret} at depth $d$---the win probability it concedes relative to the
+best option visible at that depth (Methods)---we call the signed area
 between a move's regret trajectory and its full-depth endpoint the move's \emph{swing},
-$\mathrm{sw}(m)=\sum_d\!\left(\delta_{m,d}-\delta_{m,D}\right)$ (Methods): positive
+$\mathrm{sw}(m)=\sum_d\!\left(\delta_{m,d}-\delta_{m,D}\right)$: positive
 (\emph{swing-up}, a deep discovery) when a move looks worse shallow than it truly is, negative
 (\emph{swing-down}, a trap) when shallow search flatters it. A position's total swing,
 $\sum_m\lvert\mathrm{sw}(m)\rvert$, measures how much the picture changes with depth---how
 much deliberation the position can reward. The depth at which the played move's flaw or worth
 becomes visible is the signal everything below is built on.
 
+% >>> REV-COAUTHOR (Jul 2026): Fig 1 panel refs re-lettered (a->b, b->c, c->d) after the
+% worked-example panel was added as the new Fig 1a. <<<
 \paragraph{Skill lives in the errors, not the successes.}
 Our primary sample comprises 922{,}412 decisions by 16{,}328 players rated 1200 to 2600+,
 drawn from online play and from elite over-the-board tournaments (Methods). At shallow engine
@@ -295,7 +304,10 @@ staged value estimates in planning tasks---but that generality remains to be dem
 The primary dataset comprises 922{,}412 decisions by 16{,}328 players: online games from the
 Lichess open database (month 2025-09), balanced-sampled across rating bands (200-point bins,
 1200--2600+) and time classes (bullet, blitz, rapid, classical), with per-move clock times
-retained. Time classes follow Lichess's convention, by estimated game duration (initial time
+retained.
+% >>> REV-COAUTHOR (Jul 2026): explicit time-class thresholds + format-pooling disclosure
+% (e.g. 1+0 vs 1+1 bullet) added at K.W.R.'s suggestion. <<<
+Time classes follow Lichess's convention, by estimated game duration (initial time
 plus $40\times$ the increment): bullet under 3 minutes, blitz 3--8, rapid 8--25, and
 classical 25 minutes or more. Each class therefore pools nearby formats---1+0 and 1+1 bullet,
 for instance, both fall in the bullet class despite an appreciable difference in effective
@@ -381,9 +393,11 @@ agree---stronger players satisfice deeper and err less---now within time control
 larger scale, on win-probability evaluation, with a human-pattern prior, and under a
 registered replication programme.
 
+% >>> REV-COAUTHOR (Jul 2026): added the critical-depth d_i lineage note (Biswas & Regan 2015). <<<
 \paragraph{Item-response formulation.}
 Each decision is an item. Difficulty $b_j$ is the deepest grid depth at which the
-apparent-best move differs from the full-depth best move (critical depth, in plies); the
+apparent-best move differs from the full-depth best move---the critical depth $d_i$ of
+Biswas and Regan \citep{biswas2015}, in plies; the
 ordered response is the played move's full-depth regret binned as best ($\le0.02$),
 inaccuracy ($\le0.05$), mistake ($\le0.10$), or blunder ($>0.10$) in win-probability units.
 We fit an explanatory proportional-odds graded-response model
@@ -430,6 +444,7 @@ too weak in turn (blitz positive in the prospective month). Neither deviation to
 primary hypotheses.
 
 \paragraph{Reproducibility.}
+% >>> REV-COAUTHOR (Jul 2026): python-chess credited as UCI bridge + board representation. <<<
 Stockfish~18 (shared NNUE), Threads~1 per process across many single-thread engines, Hash
 256\,MB, $D{=}21$, $K{=}9$, $2\times10^{8}$-node cap, driven through the \texttt{python-chess}
 UCI bridge (v1.11), which also provides all board and move representation; Maia-3
@@ -474,6 +489,8 @@ beyond the public usernames and player names attached to those records, and so d
 require ethical approval.
 
 \begin{figure}[h]\centering\includegraphics[width=\linewidth]{figs/fig1_error_vs_depth.png}
+% >>> REV-COAUTHOR (Jul 2026): caption rewritten -- new worked-example panel a described,
+% panels re-lettered b-d, chess notation glossed for non-chess readers. <<<
 \caption{\textbf{Skill separates only at depth, and mostly on deep-discovery moves.}
 \textbf{a}, A worked example: candidate-move win probabilities across engine search depth for
 one real decision (grey, other candidates; moves in standard algebraic notation). The played

@@ -12,7 +12,7 @@
 \title[Depth of human reasoning from errors]{Errors reveal the depth of human reasoning}
 
 \author*[1]{\fnm{Tamal} \sur{Maharaj}\,\orcidlink{0009-0001-5835-8967}}\email{tamal@gm.rkmvu.ac.in}
-\author[2]{\fnm{Kenneth W.} \sur{Regan}}\email{regan@buffalo.edu}
+\author[2]{\fnm{Kenneth W.} \sur{Regan}\,\orcidlink{0000-0002-7382-7178}}\email{regan@buffalo.edu}
 
 \affil[1]{\orgname{Ramakrishna Mission Vivekananda Educational and Research Institute},
 \orgaddress{\city{Belur Math}, \state{West Bengal}, \country{India}}}
@@ -92,19 +92,36 @@ final, registered confirmation succeeded on all three primary hypotheses.
 
 \section{Results}
 
+\paragraph{Reading a decision at increasing depth.}
+A chess engine evaluates by \emph{iterative deepening}: it scores every candidate move
+looking one ply (half-move) ahead, then two, and so on, revising each move's evaluation at
+every new horizon. A move's value is therefore not a number but a \emph{trajectory} across
+depth, and that trajectory is our raw material. Figure~\ref{fig:f1}a shows a real decision
+from the data. A 1910-rated player, offered a bishop, recaptured it (fxe6): at shallow depth
+the capture looks close to winning, but from about eight plies the refutation comes into
+view and its value collapses. The quiet king move Kb8 shows the opposite signature---
+unimpressive at a glance, it proves best once the search runs deep. We call the signed area
+between a move's regret trajectory and its full-depth endpoint the move's \emph{swing},
+$\mathrm{sw}(m)=\sum_d\!\left(\delta_{m,d}-\delta_{m,D}\right)$ (Methods): positive
+(\emph{swing-up}, a deep discovery) when a move looks worse shallow than it truly is, negative
+(\emph{swing-down}, a trap) when shallow search flatters it. A position's total swing,
+$\sum_m\lvert\mathrm{sw}(m)\rvert$, measures how much the picture changes with depth---how
+much deliberation the position can reward. The depth at which the played move's flaw or worth
+becomes visible is the signal everything below is built on.
+
 \paragraph{Skill lives in the errors, not the successes.}
 Our primary sample comprises 922{,}412 decisions by 16{,}328 players rated 1200 to 2600+,
 drawn from online play and from elite over-the-board tournaments (Methods). At shallow engine
 depth, the average error of the played move barely distinguishes a club player from a
-grandmaster; the gap opens only as the engine looks deeper (Fig.~\ref{fig:f1}a). Because
+grandmaster; the gap opens only as the engine looks deeper (Fig.~\ref{fig:f1}b). Because
 online ratings are pool-specific---a separate rating per time control---we read every
 skill comparison \emph{within} a control: at full depth, mean regret of the played move falls
 with rating in classical (0.059 at the weakest band to 0.028 at the strongest), in rapid, and
 in blitz, but stays nearly flat in bullet (0.070 to 0.055), where no one has time to search
 deeply. The separating information, moreover, is not spread evenly across mistakes. It is
-concentrated in \emph{deep-discovery} decisions---``swing-up'' moves whose worth only emerges
-at depth---which fan out cleanly by rating (Fig.~\ref{fig:f1}b), while trap-like
-``swing-down'' decisions bunch the rating bands together (Fig.~\ref{fig:f1}c). A single
+concentrated in \emph{deep-discovery} decisions---swing-up moves whose worth only emerges
+at depth---which fan out cleanly by rating (Fig.~\ref{fig:f1}c), while trap-like
+swing-down decisions bunch the rating bands together (Fig.~\ref{fig:f1}d). A single
 swing-up decision carries roughly twice the rating information of a swing-down one
 (pool-normalised single-decision $R^2\approx0.006$ versus $0.003$), an asymmetry that
 recurs in every replication month below. What matters is not how large an error is, but at
@@ -278,7 +295,12 @@ staged value estimates in planning tasks---but that generality remains to be dem
 The primary dataset comprises 922{,}412 decisions by 16{,}328 players: online games from the
 Lichess open database (month 2025-09), balanced-sampled across rating bands (200-point bins,
 1200--2600+) and time classes (bullet, blitz, rapid, classical), with per-move clock times
-retained; plus an elite over-the-board stratum of 371{,}279 decisions from 1{,}261 titled
+retained. Time classes follow Lichess's convention, by estimated game duration (initial time
+plus $40\times$ the increment): bullet under 3 minutes, blitz 3--8, rapid 8--25, and
+classical 25 minutes or more. Each class therefore pools nearby formats---1+0 and 1+1 bullet,
+for instance, both fall in the bullet class despite an appreciable difference in effective
+time---so residual within-class heterogeneity remains, and every skill comparison in this
+paper is made within class, never across; plus an elite over-the-board stratum of 371{,}279 decisions from 1{,}261 titled
 players in broadcast tournament games, which supports the individual-profile case study.
 Replication datasets---Lichess 2026-05 (179{,}360 decisions), 2026-04 (168{,}654), and the
 prospective 2026-06 (203{,}248 decisions, 3{,}707 players, 113{,}421 classical)---were each
@@ -409,7 +431,9 @@ primary hypotheses.
 
 \paragraph{Reproducibility.}
 Stockfish~18 (shared NNUE), Threads~1 per process across many single-thread engines, Hash
-256\,MB, $D{=}21$, $K{=}9$, $2\times10^{8}$-node cap; Maia-3 (\texttt{maia3-79m}); depth grid
+256\,MB, $D{=}21$, $K{=}9$, $2\times10^{8}$-node cap, driven through the \texttt{python-chess}
+UCI bridge (v1.11), which also provides all board and move representation; Maia-3
+(\texttt{maia3-79m}); depth grid
 $\{2,4,\dots,22\}$; sampling seed 17 and 60 games per (rating band $\times$ time class) cell
 in every month; train/test split by player; model fits seeded. Strata and the primary
 interaction were fixed before held-out evaluation; post-hoc choices are labelled exploratory.
@@ -451,11 +475,15 @@ require ethical approval.
 
 \begin{figure}[h]\centering\includegraphics[width=\linewidth]{figs/fig1_error_vs_depth.png}
 \caption{\textbf{Skill separates only at depth, and mostly on deep-discovery moves.}
+\textbf{a}, A worked example: candidate-move win probabilities across engine search depth for
+one real decision (grey, other candidates). The played capture fxe6 looks nearly winning at
+shallow depth and collapses once the refutation surfaces (a \emph{trap}, swing-down); the
+quiet Kb8 reveals its worth only deep (a \emph{deep discovery}, swing-up). \textbf{b--d},
 Mean regret of the played move across engine search depth, by rating band (light to dark
 blue: 1200--1400 up to 2600+), within the slow controls (classical and rapid).
-\textbf{a}, All decisions: rating bands are nearly indistinguishable at shallow depth and fan
-apart as the engine looks deeper. \textbf{b}, Swing-up (deep-discovery) decisions: a clean,
-well-ordered rating fan---the rating signal concentrates here. \textbf{c}, Swing-down (trap)
+\textbf{b}, All decisions: rating bands are nearly indistinguishable at shallow depth and fan
+apart as the engine looks deeper. \textbf{c}, Swing-up (deep-discovery) decisions: a clean,
+well-ordered rating fan---the rating signal concentrates here. \textbf{d}, Swing-down (trap)
 decisions: bands bunch and overlap, separating roughly half as much. The rating axis spans
 online play (lower bands) to elite over-the-board play (upper bands).}
 \label{fig:f1}\end{figure}

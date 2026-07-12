@@ -250,9 +250,42 @@ def band_of(elo):
     return -1
 
 
+# Worked example for Fig1a. Chosen deterministically from the primary month: among classical
+# decisions (Elo 1800-2200, plies 20-60, 4-6 candidates), the position maximising
+# trap_drop(played) + discovery_rise(best alt) + shallow_seduction gap (all >= thresholds
+# 0.10/0.10/0.03); see the selection sweep in the repo history. Winner: a 1910-rated player
+# recaptures a bishop with fxe6 -- excellent at shallow depth, refuted (Qxe6+) deeper --
+# while the quiet Kb8 reveals its worth only at depth.
+EXAMPLE_POS = "dvqfQ20I:39"
+EXAMPLE_LABELS = {"f7e6": ("played:  fxe6  (trap)", "#d03b3b"),
+                  "c8b8": ("best:  Kb8  (deep discovery)", "#184f95")}
+
+
+def _worked_example_panel(cfg, axi):
+    """Fig1a: one real decision's candidate win-prob trajectories across engine depth."""
+    dt = pd.read_parquet(cfg["data"]["depth_traj"])
+    ex = dt[dt.pos_id == EXAMPLE_POS]
+    for mv, grp in ex.groupby("move"):
+        grp = grp.sort_values("depth")
+        if mv in EXAMPLE_LABELS:
+            lab, col = EXAMPLE_LABELS[mv]
+            axi.plot(grp.depth, grp.winprob, color=col, lw=2.3, zorder=4)
+            end = grp.iloc[-1]
+            figstyle.direct_label(axi, end.depth, end.winprob, lab, col, dx=5,
+                                  fontsize=7.5, weight="bold")
+        else:
+            axi.plot(grp.depth, grp.winprob, color=figstyle.MUTED, lw=1.0, alpha=0.45, zorder=2)
+    axi.set_xlabel("engine search depth (plies)")
+    axi.set_ylabel("win probability, player to move")
+    axi.set_title("One decision at increasing depth")
+    axi.set_xticks([1, 6, 11, 16, 21])
+    axi.set_xlim(right=27.5)                 # room for the direct labels
+    return ex.pos_id.nunique()
+
+
 def e1(cfg):
-    """Fig1: played-move regret across depth, by rating band and swing class.
-    Straight from train.pt (delta[n, y[n], :] is the played move's depth-resolved regret)."""
+    """Fig1: (a) worked example; (b-d) played-move regret across depth, by rating band and
+    swing class. b-d straight from train.pt (delta[n, y[n], :] is the played move's regret)."""
     os.makedirs(FIGDIR, exist_ok=True)
     blob, delta, logq, mask, dmask, ctx, y = load(cfg)
     meta = blob["meta"]
@@ -263,12 +296,14 @@ def e1(cfg):
     pr = delta[np.arange(len(y)), y].numpy()        # [N, D] played-move regret on the grid
     bands = np.array([band_of(e) for e in elo])
     band_names = [f"{lo}–{hi}" for lo, hi in BANDS[:-1]] + ["2600+"]
-    fig, ax = plt.subplots(1, 3, figsize=(12.6, 3.9), sharey=True, constrained_layout=True)
+    fig, ax = plt.subplots(1, 4, figsize=(13.6, 3.6), constrained_layout=True)
+    _worked_example_panel(cfg, ax[0])
+    figstyle.panel_label(ax[0], "a", dx=-0.20)
     panels = [("All decisions", np.ones(len(y), bool)),
               ("Swing-up (deep discovery)", sw == "up"),
               ("Swing-down (traps)", sw == "down")]
     print(f"E1 (slow controls, classical+rapid; n={int(slow.sum()):,}):")
-    for pi, ((title, msw), axi, lab) in enumerate(zip(panels, ax, "abc")):
+    for pi, ((title, msw), axi, lab) in enumerate(zip(panels, ax[1:], "bcd")):
         m = msw & slow
         for bi in range(len(BANDS)):
             sel = (bands == bi) & m
@@ -277,7 +312,7 @@ def e1(cfg):
                 curve = pr[sel].mean(0)
                 axi.plot(grid, curve, color=figstyle.BAND_RAMP[bi],
                          lw=2.3 if extreme else 1.7, label=band_names[bi], zorder=3)
-                if pi == 1 and extreme:      # direct-label the ramp extremes once, panel b
+                if pi == 1 and extreme:      # direct-label the ramp extremes once, panel c
                     figstyle.direct_label(axi, grid[-1], curve[-1], band_names[bi],
                                           figstyle.BAND_RAMP[max(bi, 3)], dx=5,
                                           weight="bold")
@@ -289,9 +324,15 @@ def e1(cfg):
                        for bi in range(len(BANDS))])
         print(f"  {title:28s} deep-regret by band: " + " ".join(f"{v:.3f}" for v in bm if not np.isnan(v))
               + f"   (spread={np.nanmax(bm)-np.nanmin(bm):.3f})")
-    ax[1].set_xlim(right=grid[-1] + 3.6)     # room for the direct labels
-    ax[0].set_ylabel("mean regret of played move\n(win probability)")
-    leg = ax[2].legend(title="rating band", ncol=2, loc="upper left",
+    # regret panels share one scale (worked-example panel a has its own, win-prob)
+    ylo = min(a.get_ylim()[0] for a in ax[1:]); yhi = max(a.get_ylim()[1] for a in ax[1:])
+    for a in ax[1:]:
+        a.set_ylim(ylo, yhi)
+    for a in ax[2:]:
+        a.tick_params(labelleft=False)
+    ax[2].set_xlim(right=grid[-1] + 3.6)     # room for the direct labels
+    ax[1].set_ylabel("mean regret of played move\n(win probability)")
+    leg = ax[3].legend(title="rating band", ncol=2, loc="upper left",
                        handlelength=1.4, columnspacing=1.0, labelspacing=0.3)
     leg.get_title().set_fontsize(8)
     p = f"{FIGDIR}/fig1_error_vs_depth.png"; figstyle.save(fig, p)

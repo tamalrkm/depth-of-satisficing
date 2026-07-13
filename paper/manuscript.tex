@@ -116,6 +116,27 @@ $\sum_m\lvert\mathrm{sw}(m)\rvert$, measures how much the picture changes with d
 much deliberation the position can reward. The depth at which the played move's flaw or worth
 becomes visible is the signal everything below is built on.
 
+% NOTE: figures are embedded at first citation and numbered in citation order (Nature rule).
+% PNG filenames keep their historical numbering (fig7_irt.png prints as Figure 5, etc.);
+% files get renamed to production numbering at acceptance.
+\begin{figure}[t]\centering\includegraphics[width=\linewidth]{figs/fig1_error_vs_depth.png}
+% >>> REV-COAUTHOR (Jul 2026): caption rewritten -- new worked-example panel a described,
+% panels re-lettered b-d, chess notation glossed for non-chess readers. <<<
+\caption{\textbf{Skill separates only at depth, and mostly on deep-discovery moves.}
+\textbf{a}, A worked example: candidate-move win probabilities across engine search depth for
+one real decision (grey, other candidates; moves in standard algebraic notation). The played
+pawn capture fxe6 looks nearly winning at shallow depth and collapses once the refutation
+surfaces (a \emph{trap}, swing-down); the quiet king move Kb8 reveals its worth only deep (a
+\emph{deep discovery}, swing-up). \textbf{b--d},
+Mean regret of the played move across engine search depth, by rating band (light to dark
+blue: 1200--1400 up to 2600+), within the slow controls (classical and rapid).
+\textbf{b}, All decisions: rating bands are nearly indistinguishable at shallow depth and fan
+apart as the engine looks deeper. \textbf{c}, Swing-up (deep-discovery) decisions: a clean,
+well-ordered rating fan---the rating signal concentrates here. \textbf{d}, Swing-down (trap)
+decisions: bands bunch and overlap, separating roughly half as much. The rating axis spans
+online play (lower bands) to elite over-the-board play (upper bands).}
+\label{fig:f1}\end{figure}
+
 % >>> REV-COAUTHOR (Jul 2026): Fig 1 panel refs re-lettered (a->b, b->c, c->d) after the
 % worked-example panel was added as the new Fig 1a. <<<
 \paragraph{Skill lives in the errors, not the successes.}
@@ -149,6 +170,16 @@ which rules out the construct being a re-description of rating. The same signatu
 \emph{within} players: de-meaned depth rises across think-time quartiles, from $-0.14$ plies
 on a player's fastest quarter of moves to $+0.33$ on their slowest (Fig.~\ref{fig:f2}b).
 
+\begin{figure}[t]\centering\includegraphics[width=0.92\linewidth]{figs/fig2_depth_rating_time.png}
+\caption{\textbf{Depth of satisficing rises with skill and with time to think.}
+\textbf{a}, Posterior depth of satisficing by rating band, within each time control (shaded
+bands, player-clustered bootstrap 95\% CIs). Depth rises with rating in classical
+(Spearman $\rho=+0.40$), rapid ($+0.66$) and blitz ($+0.45$); bullet, where no one can
+search, is the flat negative control ($\rho=-0.04$). \textbf{b}, Within-player effect:
+de-meaned depth by think-time quartile (dots, pooled means; bars, player-clustered bootstrap
+95\% CIs). The same players search deeper on their slower moves.}
+\label{fig:f2}\end{figure}
+
 \paragraph{Inferred depth tracks real thinking time it was never shown.}
 The construct's key non-circular test removes the clock from the model entirely. Refit with
 the clock feature zeroed, so that timing can play no role in the estimate, the model still
@@ -158,6 +189,13 @@ assigns held-out depths that correlate with how long the player actually spent o
 opening and $+0.29$ in the endgame (Fig.~\ref{fig:f3}). Inferred depth recovers observed
 deliberation without ever being told about time. That is convergent evidence that the
 posterior reflects thinking, not the rating prior it partly leans on.
+
+\begin{figure}[t]\centering\includegraphics[width=0.55\linewidth]{figs/fig3_depth_vs_time.png}
+\caption{\textbf{Depth inferred without the clock tracks real thinking time.}
+Held-out Spearman correlation between the clock-free model's per-decision depth and observed
+time-on-move, by game phase (dashed line, all phases pooled). The correlation peaks in the
+middlegame, where deliberation varies most.}
+\label{fig:f3}\end{figure}
 
 \paragraph{A depth-aware model predicts human moves better, exactly where depth should matter.}
 If the depth of satisficing is real, knowing it should help predict what a human will play,
@@ -174,6 +212,13 @@ produce this pattern, however strong \citep{ruoss2024}; within classical play th
 almost entirely on swing-up moves ($+0.048$ nats)---precisely the choices whose worth a
 pattern model cannot see because it does not look ahead.
 
+\begin{figure}[t]\centering\includegraphics[width=0.62\linewidth]{figs/fig4_prediction_gain.png}
+\caption{\textbf{Depth improves move prediction only where depth can matter.}
+Held-out gain of the depth-aware fusion over the state-only model (nats), by time control and
+position swing. The gain concentrates in classical, high-swing positions and is absent or
+negative in fast or low-swing play---the pre-registered differential.}
+\label{fig:f4}\end{figure}
+
 \paragraph{Positions are test items; swing is their discrimination.}
 These findings admit a measurement-theoretic reading that unifies them. Treat each position
 as a test item whose \emph{difficulty} is its critical depth---the deepest ply at which a
@@ -185,11 +230,11 @@ so per-item parameters are unidentifiable), recovers the full expected structure
 severity falls with ability ($\beta=-0.13$, $p<10^{-80}$), rises with item difficulty
 ($\beta=+0.06$, $p<10^{-24}$), and---the decisive term---ability discriminates more sharply
 in high-swing positions (ability~$\times$~swing $\beta=-0.08$, $p<10^{-38}$;
-Fig.~\ref{fig:f7}a). In item-response language, \emph{swing is item discrimination}: test
+Fig.~\ref{fig:irt}a). In item-response language, \emph{swing is item discrimination}: test
 information concentrates in high-swing decisions, which is exactly why skill is legible in so
 small a fraction of moves. The graded operating curves shift cleanly along the ability axis
-(Fig.~\ref{fig:f7}b), and item difficulty lives on the same ply ruler as the person-side
-depth of satisficing (Fig.~\ref{fig:f7}c)---a natural generalisation of rating systems, which
+(Fig.~\ref{fig:irt}b), and item difficulty lives on the same ply ruler as the person-side
+depth of satisficing (Fig.~\ref{fig:irt}c)---a natural generalisation of rating systems, which
 are themselves one-parameter item-response models on game outcomes
 \citep{elo1978,rasch1960,embretson2000}. The structure is not a platform artefact. On an
 independent pool of 99{,}358 chess.com decisions by 945 players---a different site, a
@@ -199,6 +244,17 @@ same holds on a second Lichess month (2026-04: ability~$\times$~swing $\beta=-0.
 $p<10^{-40}$)---three independent pools in all. At the present decision density per player,
 ability is reliable only in aggregate; person-dense, pool-invariant ability estimation is
 future work.
+
+% Cited fifth -> printed as Figure 5 (file fig7_irt.png keeps its historical name).
+\begin{figure}[t]\centering\includegraphics[width=\linewidth]{figs/fig7_irt.png}
+\caption{\textbf{An item-response reading: swing is item discrimination.}
+\textbf{a}, Probability that the played move is not the engine-best, versus ability
+(within-pool rating $z$), by position-swing tercile: ability discriminates far more steeply
+in high-swing positions. \textbf{b}, Graded-response operating curves: probability of each
+severity category versus ability; P(best) rises and P(blunder) falls monotonically.
+\textbf{c}, Items placed on the ply ruler by their critical depth---the same scale on which
+the depth of satisficing measures person ability.}
+\label{fig:irt}\end{figure}
 
 \paragraph{Profiles, not a single number, separate expert styles.}
 Averaged per player from an \emph{elo-free} refit (so that recovering rating is not
@@ -214,19 +270,38 @@ example, Abdusattorov and Nepomniachtchi above Carlsen. The four axes instead at
 player's strength differently---Nakamura is the most trap-resistant of the six yet among the
 least time-elastic (a blitz specialist who reaches his depth \emph{fast}), while Carlsen
 converts thinking time into depth more steeply than anyone---and the inversions disappear
-(Fig.~\ref{fig:f5}).
+(Fig.~\ref{fig:profiles}).
+
+\begin{figure}[t]\centering\includegraphics[width=\linewidth]{figs/fig5_player_profiles.png}
+\caption{\textbf{Four behavioural axes separate elite styles that one number confuses.}
+Profile z-scores (versus the full population) for the six elite players with the most
+analysed decisions, ordered by rating. A one-dimensional depth score inverts elite ratings (9
+of 15 pairs discordant); the four-axis profile recovers within-pool rating across 873 players
+($R^2=0.10$, nested cross-validation) where depth alone recovers none ($R^2\approx0$), and
+reads the styles directly---for example Nakamura as most trap-resistant but among the least
+time-elastic, Carlsen as converting think time into depth most steeply.}
+\label{fig:profiles}\end{figure}
 
 \paragraph{The instrument recovers depth it has never seen.}
 Synthetic agents that satisfice at fixed, known depths, played through the identical
 pipeline, come back in the right order: recovered depth increases monotonically with planted
 depth (group-level Spearman $=1.0$ across planted depths 4--16), and the estimator
 independently recovers the agents' decision sharpness ($\hat\beta=7$ against a generating
-$\beta=6$; Fig.~\ref{fig:f6}). Recovery is ordinal rather than metric---per-agent estimates
+$\beta=6$; Fig.~\ref{fig:synth}). Recovery is ordinal rather than metric---per-agent estimates
 are noisy and compressed toward the middle (mean absolute error 3.7 plies on roughly 70
 decisions per agent)---but it establishes that the model measures depth rather than position
 difficulty. Recovery requires a flat prior over depth: imposing the human rating-conditioned
 prior collapses the estimate toward its mean, which is why the two non-circular tests above,
 and not the posterior's absolute scale, carry the evidential weight.
+
+\begin{figure}[t]\centering\includegraphics[width=0.5\linewidth]{figs/fig6_synthetic_recovery.png}
+\caption{\textbf{The instrument recovers planted search depth.}
+Synthetic agents satisficing at fixed depths (4--16 plies), run through the identical
+pipeline. Pale dots, individual agents; dark points, mean $\pm$ s.d.\ per planted depth;
+dashed line, identity. Recovery is monotone (group-level Spearman $=1.0$) though ordinal:
+per-agent estimates are compressed toward the middle (MAE 3.7 plies at $\sim$70 decisions per
+agent).}
+\label{fig:synth}\end{figure}
 
 \paragraph{A pre-registered programme ending in a prospective confirmation.}
 We pre-registered hypotheses, pipeline, and decision rules, and then ran the frozen pipeline
@@ -494,77 +569,6 @@ The study uses only publicly released, openly licensed records of voluntary onli
 broadcast play; it involves no intervention and no private or personally identifying data
 beyond the public usernames and player names attached to those records, and so did not
 require ethical approval.
-
-\begin{figure}[h]\centering\includegraphics[width=\linewidth]{figs/fig1_error_vs_depth.png}
-% >>> REV-COAUTHOR (Jul 2026): caption rewritten -- new worked-example panel a described,
-% panels re-lettered b-d, chess notation glossed for non-chess readers. <<<
-\caption{\textbf{Skill separates only at depth, and mostly on deep-discovery moves.}
-\textbf{a}, A worked example: candidate-move win probabilities across engine search depth for
-one real decision (grey, other candidates; moves in standard algebraic notation). The played
-pawn capture fxe6 looks nearly winning at shallow depth and collapses once the refutation
-surfaces (a \emph{trap}, swing-down); the quiet king move Kb8 reveals its worth only deep (a
-\emph{deep discovery}, swing-up). \textbf{b--d},
-Mean regret of the played move across engine search depth, by rating band (light to dark
-blue: 1200--1400 up to 2600+), within the slow controls (classical and rapid).
-\textbf{b}, All decisions: rating bands are nearly indistinguishable at shallow depth and fan
-apart as the engine looks deeper. \textbf{c}, Swing-up (deep-discovery) decisions: a clean,
-well-ordered rating fan---the rating signal concentrates here. \textbf{d}, Swing-down (trap)
-decisions: bands bunch and overlap, separating roughly half as much. The rating axis spans
-online play (lower bands) to elite over-the-board play (upper bands).}
-\label{fig:f1}\end{figure}
-
-\begin{figure}[h]\centering\includegraphics[width=0.92\linewidth]{figs/fig2_depth_rating_time.png}
-\caption{\textbf{Depth of satisficing rises with skill and with time to think.}
-\textbf{a}, Posterior depth of satisficing by rating band, within each time control (shaded
-bands, player-clustered bootstrap 95\% CIs). Depth rises with rating in classical
-(Spearman $\rho=+0.40$), rapid ($+0.66$) and blitz ($+0.45$); bullet, where no one can
-search, is the flat negative control ($\rho=-0.04$). \textbf{b}, Within-player effect:
-de-meaned depth by think-time quartile (dots, pooled means; bars, player-clustered bootstrap
-95\% CIs). The same players search deeper on their slower moves.}
-\label{fig:f2}\end{figure}
-
-\begin{figure}[h]\centering\includegraphics[width=0.55\linewidth]{figs/fig3_depth_vs_time.png}
-\caption{\textbf{Depth inferred without the clock tracks real thinking time.}
-Held-out Spearman correlation between the clock-free model's per-decision depth and observed
-time-on-move, by game phase (dashed line, all phases pooled). The correlation peaks in the
-middlegame, where deliberation varies most.}
-\label{fig:f3}\end{figure}
-
-\begin{figure}[h]\centering\includegraphics[width=0.62\linewidth]{figs/fig4_prediction_gain.png}
-\caption{\textbf{Depth improves move prediction only where depth can matter.}
-Held-out gain of the depth-aware fusion over the state-only model (nats), by time control and
-position swing. The gain concentrates in classical, high-swing positions and is absent or
-negative in fast or low-swing play---the pre-registered differential.}
-\label{fig:f4}\end{figure}
-
-\begin{figure}[h]\centering\includegraphics[width=\linewidth]{figs/fig5_player_profiles.png}
-\caption{\textbf{Four behavioural axes separate elite styles that one number confuses.}
-Profile z-scores (versus the full population) for the six elite players with the most
-analysed decisions, ordered by rating. A one-dimensional depth score inverts elite ratings (9
-of 15 pairs discordant); the four-axis profile recovers within-pool rating across 873 players
-($R^2=0.10$, nested cross-validation) where depth alone recovers none ($R^2\approx0$), and
-reads the styles directly---for example Nakamura as most trap-resistant but least
-time-elastic, Carlsen as converting think time into depth most steeply.}
-\label{fig:f5}\end{figure}
-
-\begin{figure}[h]\centering\includegraphics[width=0.5\linewidth]{figs/fig6_synthetic_recovery.png}
-\caption{\textbf{The instrument recovers planted search depth.}
-Synthetic agents satisficing at fixed depths (4--16 plies), run through the identical
-pipeline. Pale dots, individual agents; dark points, mean $\pm$ s.d.\ per planted depth;
-dashed line, identity. Recovery is monotone (group-level Spearman $=1.0$) though ordinal:
-per-agent estimates are compressed toward the middle (MAE 3.7 plies at $\sim$70 decisions per
-agent).}
-\label{fig:f6}\end{figure}
-
-\begin{figure}[h]\centering\includegraphics[width=\linewidth]{figs/fig7_irt.png}
-\caption{\textbf{An item-response reading: swing is item discrimination.}
-\textbf{a}, Probability that the played move is not the engine-best, versus ability
-(within-pool rating $z$), by position-swing tercile: ability discriminates far more steeply
-in high-swing positions. \textbf{b}, Graded-response operating curves: probability of each
-severity category versus ability; P(best) rises and P(blunder) falls monotonically.
-\textbf{c}, Items placed on the ply ruler by their critical depth---the same scale on which
-the depth of satisficing measures person ability.}
-\label{fig:f7}\end{figure}
 
 \bibliography{refs}
 \end{document}

@@ -450,7 +450,10 @@ Stockfish~18 (shared NNUE), Threads~1 per process across many single-thread engi
 UCI bridge (v1.11), which also provides all board and move representation; Maia-3
 (\texttt{maia3-79m}); depth grid
 $\{2,4,\dots,22\}$; sampling seed 17 and 60 games per (rating band $\times$ time class) cell
-in every month; train/test split by player; model fits seeded. Strata and the primary
+in every month; train/test split by player; model fits seeded. All analyses ran on a single
+dual-socket 64-core server with one GPU; the engine stage dominates the compute at roughly
+1{,}400 core-hours per month of data, and all model fitting and analysis complete within
+about an hour. Strata and the primary
 interaction were fixed before held-out evaluation; post-hoc choices are labelled exploratory.
 
 \paragraph{Data availability.}
@@ -471,6 +474,10 @@ the same OSF project (registrations
 \href{https://doi.org/10.17605/OSF.IO/KB4ZQ}{10.17605/OSF.IO/KB4ZQ} and
 \href{https://doi.org/10.17605/OSF.IO/A6NYK}{10.17605/OSF.IO/A6NYK}). Stockfish~18 and Maia-3
 are third-party open-source software.
+
+\paragraph{Acknowledgements.}
+The authors gratefully acknowledge the support from the Department of Science and Technology
+(DST), Government of India, through the DST-FIST grant [Sanction No.: SR/FST/MS-I/2022/116].
 
 \paragraph{Author contributions.}
 T.M. conceived the study, designed and implemented the latent-depth model and the full

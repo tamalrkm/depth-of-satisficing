@@ -25,6 +25,7 @@ OSF_TOKEN.txt
 
 # local share archives (never commit)
 depth-of-satisficing-*.zip
+manuscript_submission_*.pdf
 
 # submission materials (confidential: reviewer suggestions + view-only link)
 paper/cover_letter.md

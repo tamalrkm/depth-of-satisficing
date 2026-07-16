@@ -28,7 +28,7 @@ depth-of-satisficing-*.zip
 manuscript_submission_*.pdf
 
 # submission materials (confidential: reviewer suggestions + view-only link)
-paper/cover_letter.md
+paper/cover_letter.*
 
 # local backup of the pre-audit bibliography
 paper/refs-old.bib

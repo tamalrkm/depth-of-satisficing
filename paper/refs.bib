@@ -74,19 +74,25 @@
 @article{strzalecki2014,
   title={Depth of reasoning and higher order beliefs},
   author={Strzalecki, Tomasz},
-  journal={Journal of Economic Behavior \& Organization}, volume={108}, pages={108--122}, year={2014}}
+  journal={Journal of Economic Behavior \& Organization}, volume={108}, pages={108--122}, year={2014},
+  doi={10.1016/j.jebo.2014.09.002}}
 
 % ===== Planning depth, search, and model-based control =====
+% FIX: author order corrected -- Kuperwajs is 2nd author, Galbiati 3rd (was swapped).
 @article{vanopheusden2023,
   title={Expertise increases planning depth in human gameplay},
-  author={van Opheusden, Bas and Galbiati, Gianni and Kuperwajs, Ionatan and Bnaya, Zahy and Li, Yunqi and Ma, Wei Ji},
+  author={van Opheusden, Bas and Kuperwajs, Ionatan and Galbiati, Gianni and Bnaya, Zahy and Li, Yunqi and Ma, Wei Ji},
   journal={Nature}, volume={618}, number={7967}, pages={1000--1005}, year={2023},
   doi={10.1038/s41586-023-06124-2}}
 
+% FIX: last author is Falk Lieder, NOT Wei Ji Ma (Ma is not an author on this paper).
+% NB: this paper carries a publisher correction specifically about author order
+% (Nat Hum Behav 6, 1027, doi:10.1038/s41562-022-01411-w); the order below is the corrected one.
 @article{callaway2022,
   title={Rational use of cognitive resources in human planning},
-  author={Callaway, Frederick and van Opheusden, Bas and Gul, Sayan and Das, Priyam and Krueger, Paul M. and Griffiths, Thomas L. and Ma, Wei Ji},
-  journal={Nature Human Behaviour}, volume={6}, number={8}, pages={1112--1125}, year={2022}}
+  author={Callaway, Frederick and van Opheusden, Bas and Gul, Sayan and Das, Priyam and Krueger, Paul M. and Griffiths, Thomas L. and Lieder, Falk},
+  journal={Nature Human Behaviour}, volume={6}, number={8}, pages={1112--1125}, year={2022},
+  doi={10.1038/s41562-022-01332-8}}
 
 @article{daw2005,
   title={Uncertainty-based competition between prefrontal and dorsolateral striatal systems for behavioral control},
@@ -96,7 +102,8 @@
 @article{huys2012,
   title={Bonsai trees in your head: How the Pavlovian system sculpts goal-directed choices by pruning decision trees},
   author={Huys, Quentin J. M. and Eshel, Neir and O'Nions, Elizabeth and Sheridan, Luke and Dayan, Peter and Roiser, Jonathan P.},
-  journal={PLoS Computational Biology}, volume={8}, number={3}, pages={e1002410}, year={2012}}
+  journal={PLoS Computational Biology}, volume={8}, number={3}, pages={e1002410}, year={2012},
+  doi={10.1371/journal.pcbi.1002410}}
 
 @article{ratcliff2008,
   title={The diffusion decision model: Theory and data for two-choice decision tasks},
@@ -143,30 +150,41 @@
   author={Silver, David and Hubert, Thomas and Schrittwieser, Julian and Antonoglou, Ioannis and Lai, Matthew and Guez, Arthur and Lanctot, Marc and Sifre, Laurent and Kumaran, Dharshan and Graepel, Thore and Lillicrap, Timothy and Simonyan, Karen and Hassabis, Demis},
   journal={Science}, volume={362}, number={6419}, pages={1140--1144}, year={2018}}
 
-@article{mcilroyyoung2020,
+% FIX: article -> inproceedings (conference paper), journal -> booktitle.
+@inproceedings{mcilroyyoung2020,
   title={Aligning superhuman {AI} with human behavior: Chess as a model system},
   author={McIlroy-Young, Reid and Sen, Siddhartha and Kleinberg, Jon and Anderson, Ashton},
-  journal={Proceedings of the 26th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)}, pages={1677--1687}, year={2020}, doi={10.1145/3394486.3403219}}
+  booktitle={Proceedings of the 26th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)},
+  pages={1677--1687}, year={2020}, doi={10.1145/3394486.3403219}}
 
-@article{ruoss2024,
+% FIX: article -> inproceedings; volume/pages of the NeurIPS proceedings added.
+@inproceedings{ruoss2024,
   title={Amortized planning with large-scale transformers: A case study on chess},
   author={Ruoss, Anian and Del{\'e}tang, Gr{\'e}goire and Medapati, Sourabh and Grau-Moya, Jordi and Wenliang, Li Kevin and Catt, Elliot and Reid, John and Lewis, Cannada A. and Veness, Joel and Genewein, Tim},
-  journal={Advances in Neural Information Processing Systems (NeurIPS)}, year={2024}, note={arXiv:2402.04494}}
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  volume={37}, pages={65765--65790}, year={2024}, note={arXiv:2402.04494}}
 
-@article{regan2011,
+% FIX: article -> inproceedings; DOI added.
+@inproceedings{regan2011,
   title={Intrinsic chess ratings},
   author={Regan, Kenneth W. and Haworth, Guy McC.},
-  journal={Proceedings of the 25th AAAI Conference on Artificial Intelligence}, pages={834--839}, year={2011}}
+  booktitle={Proceedings of the 25th AAAI Conference on Artificial Intelligence},
+  pages={834--839}, year={2011}, doi={10.1609/aaai.v25i1.7951}}
 
-@article{biswas2015,
+% FIX: article -> inproceedings; full IEEE venue name and DOI added.
+@inproceedings{biswas2015,
   title={Measuring level-k reasoning, satisficing, and human error in game-play data},
   author={Biswas, Tamal T. and Regan, Kenneth W.},
-  journal={IEEE International Conference on Machine Learning and Applications (ICMLA)}, pages={941--947}, year={2015}}
+  booktitle={2015 IEEE 14th International Conference on Machine Learning and Applications (ICMLA)},
+  pages={941--947}, year={2015}, doi={10.1109/ICMLA.2015.233}}
 
+% FIX: full author list (was Monroe, Daniel and others); arXiv id added.
+% NB: this is the Maia-3 paper; cited in Results, Methods (Pattern prior), and Reproducibility.
 @inproceedings{monroe2026,
   title={Chessformer: A unified architecture for chess modeling},
-  author={Monroe, Daniel and others},
-  booktitle={International Conference on Learning Representations (ICLR)}, year={2026}}
+  author={Monroe, Daniel and Eilender, George and Chalmers, Philip and Tang, Zhenwei and Anderson, Ashton},
+  booktitle={International Conference on Learning Representations (ICLR)}, year={2026},
+  note={arXiv:2605.19091}}
 
 % ===== Methods / open science =====
 @article{efron1979,
@@ -184,10 +202,12 @@
   title={Probabilistic Models for Some Intelligence and Attainment Tests},
   author={Rasch, Georg}, publisher={Danish Institute for Educational Research}, address={Copenhagen}, year={1960}}
 
+% FIX: pages added (entry had none, so the reference would print incomplete).
 @article{samejima1969,
   title={Estimation of latent ability using a response pattern of graded scores},
   author={Samejima, Fumiko},
-  journal={Psychometrika Monograph Supplement}, volume={34}, number={4, Pt. 2}, year={1969}}
+  journal={Psychometrika Monograph Supplement}, volume={34}, number={4, Pt. 2}, pages={1--97}, year={1969},
+  doi={10.1007/BF03372160}}
 
 @article{fischer1973,
   title={The linear logistic test model as an instrument in educational research},
@@ -201,3 +221,4 @@
 @book{elo1978,
   title={The Rating of Chess Players, Past and Present},
   author={Elo, Arpad E.}, publisher={Arco}, address={New York}, year={1978}}
+

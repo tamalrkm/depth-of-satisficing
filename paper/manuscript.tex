@@ -51,14 +51,14 @@ people \emph{satisfice}---search until an option clears an acceptability thresho
 stop---he made the depth of that search the load-bearing variable of bounded rationality
 \citep{simon1955,simon1956}. The same hidden quantity does the work in the fast-and-frugal
 programme \citep{gigerenzer1996}, in resource-rational analysis, which treats cognition as
-the optimal use of limited computation \citep{russell1991,griffiths2015,lieder2020}, in
+the optimal use of limited computation \citep{russell1991,griffiths2015,lieder2020,callaway2022}, in
 heuristics-and-biases accounts of judgement \citep{tversky1974,kahneman1979}, and in the
 level-$k$ and cognitive-hierarchy models of strategic thinking
 \citep{stahl1995,nagel1995,costagomes2001,camerer2004,costagomes2006,crawford2013,strzalecki2014}.
 Yet in practice, how far a person looks before committing has been inferred almost entirely
 from small staged experiments. A notable recent exception used a controlled board game with
 behavioural modelling to show that planning depth grows with expertise
-\citep{callaway2022,vanopheusden2023}. Whether such regularities hold in real, repeated,
+\citep{vanopheusden2023}. Whether such regularities hold in real, repeated,
 consequential choice---outside the laboratory and at the scale of populations---has been hard
 even to ask, because natural decisions rarely come with a ground truth for how good each
 option was, let alone for how good it \emph{looked} at each successive depth of
@@ -202,7 +202,7 @@ middlegame, where deliberation varies most.}
 \paragraph{A depth-aware model predicts human moves better, exactly where depth should matter.}
 If the depth of satisficing is real, knowing it should help predict what a human will play,
 and the help should be confined to situations where depth can vary and can matter. Both hold.
-A fusion of a state-only human-move model (Maia-3) with a mixture-over-depths search model
+A fusion of a state-only human-move model (Maia-3 \citep{monroe2026}) with a mixture-over-depths search model
 improves held-out cross-entropy over the state-only model by a modest $0.012$ nats overall
 (95\% CI $[0.008,0.016]$, player-clustered bootstrap; top-1 accuracy $+0.7$ points). The
 scientific content is not the average but the pre-registered differential: the gain
@@ -345,7 +345,7 @@ with expertise, contracts under time pressure, tracks deliberation it was never 
 improves prediction exactly in the regime where deep reasoning has room to operate. The
 pattern supports a specific mechanism: people commit to the best option found at the search
 horizon they reach, rather than integrating over the whole trajectory---consistent with
-evidence that level-$k$ choices are largely insensitive to higher-order belief tails
+theoretical results that level-$k$ predictions are independent of higher-order belief tails
 \citep{strzalecki2014}, and connecting satisficing to model-based control \citep{daw2005},
 decision-tree pruning \citep{huys2012}, and bounded evidence accumulation
 \citep{ratcliff2008}. Where planning depth has been measured before, it required controlled
@@ -422,8 +422,8 @@ first; the 0.09\% of positions that stop short have their unreached depths maske
 likelihood (reached depth recorded) rather than imputed.
 
 \paragraph{Pattern prior.}
-The human-pattern prior $q_i(p,c)$ is the Maia-3 policy at the side-to-move's rating, read
-from the policy head as a full distribution over legal moves.
+The human-pattern prior $q_i(p,c)$ is the Maia-3 policy \citep{monroe2026} at the
+side-to-move's rating, read from the policy head as a full distribution over legal moves.
 
 \paragraph{Latent-depth choice model.}
 A player who has effectively searched to depth $d$ chooses by a soft-max over depth-$d$
@@ -525,7 +525,7 @@ primary hypotheses.
 Stockfish~18 (shared NNUE), Threads~1 per process across many single-thread engines, Hash
 256\,MB, $D{=}21$, $K{=}9$, $2\times10^{8}$-node cap, driven through the \texttt{python-chess}
 UCI bridge (v1.11), which also provides all board and move representation; Maia-3
-(\texttt{maia3-79m}); depth grid
+(\texttt{maia3-79m}) \citep{monroe2026}; depth grid
 $\{2,4,\dots,22\}$; sampling seed 17 and 60 games per (rating band $\times$ time class) cell
 in every month; train/test split by player; model fits seeded. All analyses ran on a single
 dual-socket 64-core server with one GPU; the engine stage dominates the compute at roughly

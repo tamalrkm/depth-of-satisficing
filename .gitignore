@@ -29,3 +29,6 @@ manuscript_submission_*.pdf
 
 # submission materials (confidential: reviewer suggestions + view-only link)
 paper/cover_letter.md
+
+# local backup of the pre-audit bibliography
+paper/refs-old.bib

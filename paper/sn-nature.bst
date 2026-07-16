@@ -1048,7 +1048,14 @@ FUNCTION {format.booktitle}
   emphasize
 }
 FUNCTION {format.in.ed.booktitle}
-{  duplicate$ empty$ 'skip$
+% PATCH: the distributed v1.1 file forgot to push the booktitle before testing it,
+% so every @inproceedings entry hit "can't pop an empty literal stack" and printed
+% without its venue. Push it first (as the standard merlin-derived styles do).
+{  format.booktitle
+   duplicate$ empty$ 'skip$
+    { "In " swap$ * }
+   if$
+   duplicate$ empty$ 'skip$
     { 
 editor "editor" format.names.ed duplicate$ empty$ 'pop$
         {  

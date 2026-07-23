@@ -1,0 +1,53 @@
+% =====================================================================================
+% SUPPLEMENTARY RESULT (draft): independent instant-move cross-check of the depth account.
+% Status: DRAFT, pending K.W.R.'s independent IPR replication in his C++ pipeline. Numbers
+% below are from src/instant_moves.py (difficulty-adjusted OLS, player-clustered SEs), stable
+% across all four data pools. Drop into the Supplementary Information (or Results) once Ken's
+% IPR numbers are in; swap the regret/accuracy proxies for IPR, or report both side by side.
+% Figure: figs/figR_instant_moves.png  (a: mean regret by band; b: engine-best match rate).
+% =====================================================================================
+
+\paragraph{An independent test using decision time.}
+The depth account makes a prediction that can be checked without our model, using only how
+long players actually spent on a move. If what separates strong from weak players is the
+depth to which they search, then the rating gap in move quality should be largest when
+players deliberate---and should shrink, though not vanish, on moves played essentially
+without search. It should not vanish entirely, because the human-pattern component of skill
+(captured by the state-only prior) is itself rating-dependent: stronger players recognise
+better moves at a glance. Deliberation should therefore \emph{amplify} an already-present
+skill gap rather than create it.
+
+We tested this on the online games, restricting to genuine decisions in which the player was
+not under time pressure. A decision was retained only if the position offered real choice
+(at least two engine-reasonable moves, final-depth regret ${\le}0.05$, and at least one
+available move that was a true mistake, regret ${\ge}0.10$), which removes forced recaptures
+and only-moves, and only if the player's clock was healthy
+($\ge\max(30\,\text{s},\,0.15\times\text{base time})$), which removes moves blitzed out in
+time trouble. Within this set we compared moves played \emph{instantly} (${\le}1$\,s) against
+moves \emph{deliberated} (${\ge}10$\,s). Because time spent is endogenous to difficulty---players
+think longer on harder positions---we did not compare quality levels between the two, but the
+slope of quality against rating \emph{within} each group, adjusting for position difficulty,
+with standard errors clustered by player.
+
+Move quality improved with rating in both groups, but far more steeply for deliberated moves.
+Played-move regret fell by $0.074$ per $1000$ rating points for deliberated moves
+(SE $0.002$) and by only $0.034$ for instant moves (SE $0.002$): deliberation roughly doubles
+the rate at which skill converts into move quality (Fig.~\ref{fig:instant}). The pattern is
+identical across all four pools---the instant slope lies between $-0.029$ and $-0.034$ and the
+deliberated slope between $-0.072$ and $-0.079$ in every month, an amplification of
+$2.2$--$2.7\times$. Skill thus helps even at a glance, as expected from rating-dependent
+pattern recognition, but most of what rating buys is realised only when the player takes the
+time to search---the behavioural signature of the depth of satisficing. This complements the
+model-based results with a model-free test, and is designed to be reproduced independently
+using the intrinsic-performance-rating framework \citep{regan2011,biswas2015} in place of the
+regret and match-rate proxies used here.
+
+\begin{figure}[t]\centering\includegraphics[width=0.92\linewidth]{figs/figR_instant_moves.png}
+\caption{\textbf{Deliberation amplifies the skill gap.} Move quality by player rating band,
+for moves played instantly (${\le}1$\,s, amber) versus deliberated (${\ge}10$\,s, dark), in
+non-forced positions with a healthy clock. \textbf{a}, Mean regret of the played move at full
+engine depth (win-probability units; lower is better). \textbf{b}, Rate of matching the
+engine-best move. In both panels the instant curve is markedly flatter across rating: skill
+separates players chiefly when they have time to search. Difficulty-adjusted, player-clustered
+estimates in the text; the pattern replicates in all four data pools.}
+\label{fig:instant}\end{figure}

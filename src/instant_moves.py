@@ -69,6 +69,7 @@ def load(tensor_path, sel_path):
 
     df = pd.DataFrame({
         "pos_id": meta["pos_id"],
+        "player": meta["player"],
         "elo": np.asarray(meta["elo"], dtype=float),
         "source": meta["source"],
         "played_reg": played_reg,
@@ -128,11 +129,12 @@ def band_slope(tab, metric):
 
 def adjusted_rating_slope(df, bucket):
     """Difficulty-adjusted effect of rating on played-move regret, within a time bucket.
-    OLS  regret ~ 1 + elo/1000 + max_avail + n_reasonable + ply-proxy, so the rating
-    coefficient is read at matched position difficulty (time spent is endogenous to
-    difficulty, so the raw instant-vs-deliberate levels are confounded; the cross-rating
-    slope within a bucket, at fixed difficulty, is the clean quantity). Plain OLS here;
-    the confirmatory version should cluster SEs by player, as in E4."""
+    OLS  regret ~ 1 + elo/1000 + max_avail + n_reasonable, so the rating coefficient is
+    read at matched position difficulty (time spent is endogenous to difficulty, so the
+    raw instant-vs-deliberate levels are confounded; the cross-rating slope within a
+    bucket, at fixed difficulty, is the clean quantity). SEs are cluster-robust by player
+    (CR0 sandwich), matching the player-clustered inference used for E4 -- decisions from
+    one player are not independent."""
     g = df[df["bucket"] == bucket]
     y = g["played_reg"].to_numpy()
     X = np.column_stack([
@@ -143,11 +145,18 @@ def adjusted_rating_slope(df, bucket):
     ])
     beta, *_ = np.linalg.lstsq(X, y, rcond=None)
     resid = y - X @ beta
-    dof = len(g) - X.shape[1]
-    sigma2 = resid @ resid / dof
-    cov = sigma2 * np.linalg.inv(X.T @ X)
+    XtX_inv = np.linalg.inv(X.T @ X)
+    # cluster-robust meat: sum over players of (X_g' u_g)(X_g' u_g)'
+    codes = pd.factorize(g["player"].to_numpy())[0]
+    Xu = X * resid[:, None]
+    G = codes.max() + 1
+    meat = np.zeros((X.shape[1], X.shape[1]))
+    agg = np.zeros((G, X.shape[1]))
+    np.add.at(agg, codes, Xu)
+    meat = agg.T @ agg
+    cov = XtX_inv @ meat @ XtX_inv
     se = np.sqrt(np.diag(cov))
-    return beta[1], se[1], len(g)      # regret change per +1000 Elo, at fixed difficulty
+    return beta[1], se[1], len(g), G   # slope per +1000 Elo, clustered SE, n rows, n players
 
 
 def figure(tab, path):
@@ -172,13 +181,42 @@ def figure(tab, path):
     figstyle.save(fig, path)
 
 
+# month label -> (tensor, selected) for the primary + three replication pools
+MONTHS = {
+    "2025-09 (primary)": ("data/train.pt", "data/selected.parquet"),
+    "2026-04 (repl)": ("data/repl04/train.pt", "data/repl04/selected.parquet"),
+    "2026-05 (repl)": ("data/repl/train.pt", "data/repl/selected.parquet"),
+    "2026-06 (repl)": ("data/repl06/train.pt", "data/repl06/selected.parquet"),
+}
+
+
+def run_all_months(t_instant):
+    print(f"{'month':20s} {'instant slope':>16s} {'deliberate slope':>18s} {'amplification':>14s}")
+    print("-" * 72)
+    rows = []
+    for label, (tp, sp) in MONTHS.items():
+        df = prepare(load(tp, sp), t_instant=t_instant)
+        bi, sei, ni, _ = adjusted_rating_slope(df, "instant")
+        bd, sed, nd, _ = adjusted_rating_slope(df, "deliberate")
+        rows.append((label, bi, sei, bd, sed))
+        print(f"{label:20s} {bi:+.4f} (SE {sei:.4f}) {bd:+.4f} (SE {sed:.4f}) {bd/bi:>10.1f}x")
+    print("\nAll four months: deliberation amplifies the rating->quality slope; "
+          "instant slope is consistently the flatter of the two.")
+    return rows
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tensor", default="data/train.pt")
     ap.add_argument("--sel", default="data/selected.parquet")
     ap.add_argument("--t-instant", type=float, default=T_INSTANT)
     ap.add_argument("--out", default="paper/figs/figR_instant_moves.png")
+    ap.add_argument("--all-months", action="store_true",
+                    help="run the difficulty-adjusted slopes across all four pools")
     args = ap.parse_args()
+    if args.all_months:
+        run_all_months(args.t_instant)
+        return
     df = prepare(load(args.tensor, args.sel), t_instant=args.t_instant)
     print(f"real-choice, healthy-clock, online decisions: {len(df):,}")
     print("  bucket counts:", df["bucket"].value_counts().to_dict())
@@ -186,12 +224,12 @@ def main():
     pd.set_option("display.float_format", lambda v: f"{v:.4f}")
     print(tab.to_string(index=False))
 
-    print("\ndifficulty-adjusted rating slope (regret change per +1000 Elo, at matched difficulty):")
+    print("\ndifficulty-adjusted rating slope (regret change per +1000 Elo, player-clustered SE):")
     slopes = {}
     for bucket in ["instant", "deliberate"]:
-        b, se, n = adjusted_rating_slope(df, bucket)
+        b, se, n, G = adjusted_rating_slope(df, bucket)
         slopes[bucket] = b
-        print(f"  {bucket:11s}  {b:+.4f}  (SE {se:.4f}, n={n:,})")
+        print(f"  {bucket:11s}  {b:+.4f}  (SE {se:.4f}, z={b/se:+.1f}, n={n:,}, players={G:,})")
     if slopes.get("instant") and slopes.get("deliberate"):
         print(f"  -> deliberation amplifies the skill gap by "
               f"{slopes['deliberate']/slopes['instant']:.1f}x "

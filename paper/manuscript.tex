@@ -22,13 +22,14 @@
 \affil[2]{\orgdiv{Department of Computer Science and Engineering},
 \orgname{University at Buffalo (SUNY)}, \orgaddress{\city{Buffalo}, \state{New York}, \country{USA}}}
 
-% NHB Articles: abstract <= 150 words, unreferenced (currently 148).
+% Abstract: unreferenced. Now targeting Cognition (unstructured, ~200-word ceiling); currently 156.
+% (Was trimmed to 148 under the NHB 150-word cap; reframed Jul 2026 to remove the tautology.)
 \abstract{How deeply people think before choosing is the hidden quantity at the centre of
 bounded rationality, yet rarely measured in natural behaviour. We read it from the structure
 of human mistakes: across more than a million skill-graded chess decisions scored by an
-engine at every search depth, players of different strength look alike on the moves they get
-right; what separates them is the depth at which their errors are exposed---the depth of
-satisficing. It rises with skill in slow play, contracts as the clock tightens, and vanishes
+engine at every search depth, the moves of strong and weak players look comparably good to a
+shallow analysis and separate only as it deepens---what divides them is the depth at which
+their errors are exposed, the depth of satisficing. It rises with skill in slow play, contracts as the clock tightens, and vanishes
 in the fastest games. Estimated without timing information, it tracks how long players
 thought, recovers the known depth of synthetic agents, and improves move prediction only
 where deep reasoning has room to matter. Every central result survived a prospective
@@ -75,10 +76,33 @@ deep must the player have looked?
 
 We call the answer the \textbf{depth of satisficing}---the depth at which the move a player
 chose stops looking better than the move they should have played. Our central empirical claim
-is that this is the dimension along which skill is most legible. Players separated by a
-thousand rating points are nearly indistinguishable on the decisions they get right. The
-information that separates them is concentrated in the minority of moves on which they err,
-and specifically in the depth at which those errors surface.
+is that this is the dimension along which skill is most legible.
+% >>> REV-COAUTHOR (Jul 2026): tautology fix. The old "indistinguishable on the moves they
+% get right" is circular -- optimal moves score identically by definition. Replaced with the
+% shallow-vs-deep framing (a move can look optimal to a shallow search and be exposed only
+% deeper) and the point that skill is present even at a glance but amplified by depth
+% (instant-move analysis). Addresses K.W.R.'s critique. <<<
+Judged only at shallow depth, the moves of players separated by a thousand rating points look
+comparably good; the gap opens as the engine searches deeper. What divides them is carried by
+their errors---not by how many they make, but by how deep one must look before the flaw
+appears. Skill is present even in moves played at a glance, since stronger players recognise
+better options without searching; but most of what rating buys is realised only through the
+depth to which a player effectively searches.
+
+% >>> REV-COAUTHOR (Jul 2026): conceptual exposition of time controls and their effect on
+% thinking, requested by K.W.R. Motivates the clock as a within-person manipulation of
+% attainable depth and frames bullet as the built-in control. <<<
+Online chess also supplies a natural, graded manipulation of how deeply a person can afford to
+look: the time control. A player with an hour for the game can follow a line many moves ahead;
+one with ten minutes cannot; and one playing \emph{bullet}---a minute or two for all the
+moves---has time only to react. Because the same players compete across every control, the
+clock varies the budget for search while holding the person, and their pattern knowledge,
+fixed. If the depth of satisficing measures search rather than mere skill, it should track
+that budget: deepest in classical play, shallower in rapid and blitz, and collapsing in
+bullet, where even strong players must move on recognition alone with no time to verify what
+they see. This graded prediction across four controls is among the sharpest tests we can put
+to the construct, and its limiting case is a built-in control: in bullet, search is
+unavailable to everyone, so any residual skill difference there is pattern, not depth.
 
 Three things distinguish this work from earlier studies of chess errors and engine depth
 \citep{regan2011,biswas2015,mcilroyyoung2020}. First, we replace descriptive curve-fitting

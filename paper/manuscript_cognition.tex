@@ -1,0 +1,80 @@
+% =====================================================================================
+% COGNITION (Elsevier) build.
+% Uses the elsarticle class with author-year (Harvard/APA-style) citations and the
+% [review] option (double-spaced, single column, line-numbered) for submission.
+% The scientific body is SHARED with the Nature-style build via \input{body}, so any
+% content edit lands in both. Requires: elsarticle.cls, elsarticle-harv.bst, refs.bib,
+% figs/, orcidlink.
+%
+% Build:  pdflatex manuscript_cognition && bibtex manuscript_cognition &&
+%         pdflatex manuscript_cognition && pdflatex manuscript_cognition
+% =====================================================================================
+\documentclass[review,authoryear,12pt]{elsarticle}
+\usepackage{graphicx,amsmath,amssymb}
+\usepackage{orcidlink}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,allcolors=blue}
+% Line numbers for review (Elsevier convention). lineno must wrap display math so it does
+% not choke on the three equation environments in the body.
+\usepackage{lineno}
+\newcommand*\patchAmsMathEnvironmentForLineno[1]{%
+  \expandafter\let\csname old#1\expandafter\endcsname\csname #1\endcsname
+  \expandafter\let\csname oldend#1\expandafter\endcsname\csname end#1\endcsname
+  \renewenvironment{#1}%
+    {\linenomath\csname old#1\endcsname}%
+    {\csname oldend#1\endcsname\endlinenomath}}%
+\newcommand*\patchBothAmsMathEnvironmentsForLineno[1]{%
+  \patchAmsMathEnvironmentForLineno{#1}%
+  \patchAmsMathEnvironmentForLineno{#1*}}%
+\AtBeginDocument{%
+  \patchBothAmsMathEnvironmentsForLineno{equation}%
+  \patchBothAmsMathEnvironmentsForLineno{align}%
+  \patchBothAmsMathEnvironmentsForLineno{gather}%
+  \patchBothAmsMathEnvironmentsForLineno{multline}}%
+\journal{Cognition}
+
+\begin{document}
+\linenumbers
+
+\begin{frontmatter}
+
+\title{Errors reveal the depth of human reasoning}
+
+\author[rkm]{Tamal Maharaj\,\orcidlink{0009-0001-5835-8967}\corref{cor1}}
+\ead{tamal@gm.rkmvu.ac.in}
+\author[ub]{Kenneth W. Regan\,\orcidlink{0000-0002-7382-7178}}
+\ead{regan@buffalo.edu}
+\cortext[cor1]{Corresponding author.}
+
+\affiliation[rkm]{organization={Ramakrishna Mission Vivekananda Educational and Research
+Institute}, addressline={Belur Math}, state={West Bengal}, country={India}}
+\affiliation[ub]{organization={Department of Computer Science and Engineering, University at
+Buffalo (SUNY)}, city={Buffalo}, state={New York}, country={USA}}
+
+\begin{abstract}
+How deeply people think before choosing is the hidden quantity at the centre of bounded
+rationality, yet rarely measured in natural behaviour. We read it from the structure of human
+mistakes: across more than a million skill-graded chess decisions scored by an engine at every
+search depth, the moves of strong and weak players look comparably good to a shallow analysis
+and separate only as it deepens---what divides them is the depth at which their errors are
+exposed, the depth of satisficing. It rises with skill in slow play, contracts as the clock
+tightens, and vanishes in the fastest games. Estimated without timing information, it tracks
+how long players thought, recovers the known depth of synthetic agents, and improves move
+prediction only where deep reasoning has room to matter. Every central result survived a
+prospective replication registered before its data existed. What people get wrong, more than
+what they get right, reveals how they think.
+\end{abstract}
+
+\begin{keyword}
+bounded rationality \sep satisficing \sep depth of reasoning \sep decision-making \sep
+expertise \sep chess
+\end{keyword}
+
+\end{frontmatter}
+
+\input{body}
+
+\bibliographystyle{elsarticle-harv}
+\bibliography{refs}
+
+\end{document}

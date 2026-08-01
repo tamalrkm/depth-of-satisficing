@@ -162,6 +162,23 @@ de-meaned depth by think-time quartile (dots, pooled means; bars, player-cluster
 95\% CIs). The same players search deeper on their slower moves.}
 \label{fig:f2}\end{figure}
 
+% >>> REV-COAUTHOR (Jul 2026): deeper exposition of the time controls and their effect on
+% thinking, requested by K.W.R. Grounds the four controls in their actual median move-time
+% budget (11/5/3/1 s) and ties the clock to attainable depth. <<<
+\paragraph{What the clock buys.}
+The four controls form a graded ladder of thinking time rather than arbitrary labels. In the
+online sample the median time a player actually spends on a move falls from about $11$ seconds
+in classical play to $5$ in rapid, $3$ in blitz, and $1$ in bullet---close to an order of
+magnitude, tracking base budgets from thirty minutes down to one. This ladder is what the
+depth of satisficing responds to: with more clock a player can carry a line further before
+committing, so depth rises with skill in classical, rapid, and blitz, where there is time to
+search, and goes flat in bullet, where a move must be produced in about a second---from
+recognition rather than search. The within-player pattern says the same thing from the other
+side: the same person searches deeper on their slower moves (Fig.~\ref{fig:f2}b). The clock
+sets the ceiling on attainable depth, and skill is expressed in how fully a player uses the
+room the clock allows---which is why time pressure compresses the skill gap and slow play
+opens it.
+
 \paragraph{Inferred depth tracks real thinking time it was never shown.}
 The construct's key non-circular test removes the clock from the model entirely. Refit with
 the clock feature zeroed, so that timing can play no role in the estimate, the model still

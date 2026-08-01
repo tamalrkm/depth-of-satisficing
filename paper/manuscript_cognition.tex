@@ -1,21 +1,30 @@
 % =====================================================================================
-% COGNITION (Elsevier) build.
-% Uses the elsarticle class with author-year (Harvard/APA-style) citations and the
-% [review] option (double-spaced, single column, line-numbered) for submission.
-% The scientific body is SHARED with the Nature-style build via \input{body}, so any
-% content edit lands in both. Requires: elsarticle.cls, elsarticle-harv.bst, refs.bib,
-% figs/, orcidlink.
+% COGNITION submission build -- APA 7th references (the journal's style).
+%
+% Uses the standard article class with apacite (true APA citations + reference list) in
+% natbib-compatibility mode, double-spaced and line-numbered for review. Cognition accepts
+% this under Elsevier's "Your Paper Your Way" for initial submission; APA is what a
+% psychology readership expects. (elsarticle cannot be combined with apacite -- it overrides
+% the bibliography apacite needs -- so a clean article class is the correct base here.)
+%
+% The scientific body is SHARED with the Nature-style build via \input{body}, so content
+% edits land in both with no drift. apacite.sty and apacite.bst are bundled in paper/
+% (generated from the CTAN apacite.dtx) for machines whose TeX Live predates the package.
 %
 % Build:  pdflatex manuscript_cognition && bibtex manuscript_cognition &&
 %         pdflatex manuscript_cognition && pdflatex manuscript_cognition
 % =====================================================================================
-\documentclass[review,authoryear,12pt]{elsarticle}
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
 \usepackage{graphicx,amsmath,amssymb}
+\usepackage[natbibapa]{apacite}          % true APA 7th; \citep/\citet resolve as APA
+\usepackage{setspace}
+\usepackage{authblk}
 \usepackage{orcidlink}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,allcolors=blue}
-% Line numbers for review (Elsevier convention). lineno must wrap display math so it does
-% not choke on the three equation environments in the body.
+
+% Line numbers for review; wrap the body's display-math envs so lineno does not choke.
 \usepackage{lineno}
 \newcommand*\patchAmsMathEnvironmentForLineno[1]{%
   \expandafter\let\csname old#1\expandafter\endcsname\csname #1\endcsname
@@ -31,33 +40,29 @@
   \patchBothAmsMathEnvironmentsForLineno{align}%
   \patchBothAmsMathEnvironmentsForLineno{gather}%
   \patchBothAmsMathEnvironmentsForLineno{multline}}%
-\journal{Cognition}
+
+\title{\bfseries Errors reveal the depth of human reasoning}
+\author[1]{Tamal Maharaj\,\orcidlink{0009-0001-5835-8967}%
+  \thanks{Corresponding author: \texttt{tamal@gm.rkmvu.ac.in}}}
+\author[2]{Kenneth W. Regan\,\orcidlink{0000-0002-7382-7178}}
+\affil[1]{Ramakrishna Mission Vivekananda Educational and Research Institute,
+Belur Math, West Bengal, India}
+\affil[2]{Department of Computer Science and Engineering, University at Buffalo (SUNY),
+Buffalo, New York, USA}
+\date{}
 
 \begin{document}
+\maketitle
 \linenumbers
-
-\begin{frontmatter}
-
-\title{Errors reveal the depth of human reasoning}
-
-\author[rkm]{Tamal Maharaj\,\orcidlink{0009-0001-5835-8967}\corref{cor1}}
-\ead{tamal@gm.rkmvu.ac.in}
-\author[ub]{Kenneth W. Regan\,\orcidlink{0000-0002-7382-7178}}
-\ead{regan@buffalo.edu}
-\cortext[cor1]{Corresponding author.}
-
-\affiliation[rkm]{organization={Ramakrishna Mission Vivekananda Educational and Research
-Institute}, addressline={Belur Math}, state={West Bengal}, country={India}}
-\affiliation[ub]{organization={Department of Computer Science and Engineering, University at
-Buffalo (SUNY)}, city={Buffalo}, state={New York}, country={USA}}
+\doublespacing
 
 \begin{abstract}
-How deeply people think before choosing is the hidden quantity at the centre of bounded
-rationality, yet rarely measured in natural behaviour. We read it from the structure of human
-mistakes: across more than a million skill-graded chess decisions scored by an engine at every
-search depth, the moves of strong and weak players look comparably good to a shallow analysis
-and separate only as it deepens---what divides them is the depth at which their errors are
-exposed, the depth of satisficing. It rises with skill in slow play, contracts as the clock
+\noindent How deeply people think before choosing is the hidden quantity at the centre of
+bounded rationality, yet rarely measured in natural behaviour. We read it from the structure
+of human mistakes: across more than a million skill-graded chess decisions scored by an engine
+at every search depth, the moves of strong and weak players look comparably good to a shallow
+analysis and separate only as it deepens---what divides them is the depth at which their errors
+are exposed, the depth of satisficing. It rises with skill in slow play, contracts as the clock
 tightens, and vanishes in the fastest games. Estimated without timing information, it tracks
 how long players thought, recovers the known depth of synthetic agents, and improves move
 prediction only where deep reasoning has room to matter. Every central result survived a
@@ -65,16 +70,14 @@ prospective replication registered before its data existed. What people get wron
 what they get right, reveals how they think.
 \end{abstract}
 
-\begin{keyword}
-bounded rationality \sep satisficing \sep depth of reasoning \sep decision-making \sep
-expertise \sep chess
-\end{keyword}
+\noindent\textbf{Keywords:} bounded rationality; satisficing; depth of reasoning;
+decision-making; expertise; chess
 
-\end{frontmatter}
+\bigskip
 
 \input{body}
 
-\bibliographystyle{elsarticle-harv}
+\bibliographystyle{apacite}
 \bibliography{refs}
 
 \end{document}

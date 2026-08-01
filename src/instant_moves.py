@@ -159,25 +159,48 @@ def adjusted_rating_slope(df, bucket):
     return beta[1], se[1], len(g), G   # slope per +1000 Elo, clustered SE, n rows, n players
 
 
-def figure(tab, path):
-    fig, ax = plt.subplots(1, 2, figsize=(9.2, 3.8), constrained_layout=True)
+def figure(tab, df, path):
+    """Show the AMPLIFICATION (rating slope), never the between-bucket levels.
+
+    The raw level of quality differs between buckets only because of selection: players move
+    instantly when they already recognise the move (usually correct) and deliberate when they
+    are unsure (more error-prone), so instant decisions are self-selected as easier. Plotting
+    the raw levels invites the false reading "instant play beats thinking." We therefore (a)
+    re-anchor each curve to its own weakest band, so the eye compares the rating gradient not
+    the level, and (b) summarise with the difficulty-adjusted, player-clustered rating slope."""
     styles = {"instant": (figstyle.TC_COLORS["blitz"], "instant (<=1 s)"),
               "deliberate": (figstyle.INK, "deliberate (>=10 s)")}
-    for j, (metric, ylab, lo) in enumerate([
-            ("mean_regret", "mean regret of played move\n(win probability; lower = better)", True),
-            ("accuracy", "engine-best match rate", False)]):
-        a = ax[j]
-        for bucket, (col, lab) in styles.items():
-            t = tab[tab["bucket"] == bucket]
-            x = [BAND_LABELS.index(b) for b in t["band"]]
-            a.plot(x, t[metric], "-o", color=col, lw=2.2, ms=5, zorder=4, label=lab)
-        a.set_xticks(range(len(BAND_LABELS)))
-        a.set_xticklabels(BAND_LABELS, rotation=35, ha="right", fontsize=7)
-        a.set_xlabel("player rating band (Elo)")
-        a.set_ylabel(ylab)
-        figstyle.panel_label(a, "ab"[j])
-        if j == 0:
-            a.legend(frameon=False, fontsize=8, loc="best")
+    fig, ax = plt.subplots(1, 2, figsize=(9.4, 3.9), constrained_layout=True)
+
+    # Panel a: change in mean regret from the weakest band (both start at 0 -> compare slope).
+    a = ax[0]
+    for bucket, (col, lab) in styles.items():
+        t = tab[tab["bucket"] == bucket].copy()
+        t["xi"] = [BAND_LABELS.index(b) for b in t["band"]]
+        t = t.sort_values("xi")
+        base = t["mean_regret"].iloc[0]
+        a.plot(t["xi"], t["mean_regret"] - base, "-o", color=col, lw=2.2, ms=5, zorder=4, label=lab)
+    figstyle.zero_line(a) if hasattr(figstyle, "zero_line") else a.axhline(0, color=figstyle.GRID, lw=1)
+    a.set_xticks(range(len(BAND_LABELS)))
+    a.set_xticklabels(BAND_LABELS, rotation=35, ha="right", fontsize=7)
+    a.set_xlabel("player rating band (Elo)")
+    a.set_ylabel("change in mean regret from weakest band\n(more negative = quality improves faster)")
+    a.legend(frameon=False, fontsize=8, loc="best")
+    figstyle.panel_label(a, "a")
+
+    # Panel b: difficulty-adjusted, player-clustered rating slope per bucket, with 95% CI.
+    b = ax[1]
+    for i, (bucket, (col, lab)) in enumerate(styles.items()):
+        beta, se, n, G = adjusted_rating_slope(df, bucket)
+        b.errorbar(i, beta, yerr=1.96 * se, fmt="o", color=col, ms=8, lw=2.2, capsize=5, zorder=4)
+        b.annotate(f"{beta:+.3f}", (i, beta), textcoords="offset points", xytext=(10, 0),
+                   va="center", fontsize=8, color=col)
+    b.axhline(0, color=figstyle.GRID, lw=1)
+    b.set_xlim(-0.5, 1.5)
+    b.set_xticks([0, 1])
+    b.set_xticklabels(["instant", "deliberate"])
+    b.set_ylabel("rating slope of regret\n(per +1000 Elo, difficulty-adjusted)")
+    figstyle.panel_label(b, "b")
     figstyle.save(fig, path)
 
 
@@ -235,7 +258,7 @@ def main():
               f"{slopes['deliberate']/slopes['instant']:.1f}x "
               f"(more negative = quality improves faster with rating)")
 
-    figure(tab, args.out)
+    figure(tab, df, args.out)
     print(f"\nwrote {args.out}")
 
 

@@ -4,7 +4,11 @@
 % below are from src/instant_moves.py (difficulty-adjusted OLS, player-clustered SEs), stable
 % across all four data pools. Drop into the Supplementary Information (or Results) once Ken's
 % IPR numbers are in; swap the regret/accuracy proxies for IPR, or report both side by side.
-% Figure: figs/figR_instant_moves.png  (a: mean regret by band; b: engine-best match rate).
+% Figure: figs/figR_instant_moves.png  (a: change in regret from weakest band, by bucket;
+% b: difficulty-adjusted player-clustered rating slope per bucket, with 95% CI). The figure
+% deliberately does NOT show between-bucket quality LEVELS -- those are confounded by
+% recognition-based selection (players move fast when they already see the move), so instant
+% decisions are self-selected as easier; only the within-bucket rating SLOPE is interpretable.
 % =====================================================================================
 
 \paragraph{An independent test using decision time.}
@@ -24,10 +28,16 @@ available move that was a true mistake, regret ${\ge}0.10$), which removes force
 and only-moves, and only if the player's clock was healthy
 ($\ge\max(30\,\text{s},\,0.15\times\text{base time})$), which removes moves blitzed out in
 time trouble. Within this set we compared moves played \emph{instantly} (${\le}1$\,s) against
-moves \emph{deliberated} (${\ge}10$\,s). Because time spent is endogenous to difficulty---players
-think longer on harder positions---we did not compare quality levels between the two, but the
-slope of quality against rating \emph{within} each group, adjusting for position difficulty,
-with standard errors clustered by player.
+moves \emph{deliberated} (${\ge}10$\,s). Crucially, we do \emph{not} compare quality levels
+between the two groups. Time spent is endogenous to the decision: players move instantly when
+they already recognise the move---which usually means it is correct---and deliberate when they
+are unsure, which predicts error. Instant decisions are therefore self-selected as the easier
+ones (this selection is on the player's subjective recognition and is not removed by
+controlling for objective position difficulty), so their higher raw accuracy reflects
+\emph{which} decisions get played fast, not a benefit of not thinking. The interpretable
+quantity is instead the slope of quality against rating \emph{within} each group---each group
+serving as its own baseline---estimated with position-difficulty covariates and standard
+errors clustered by player.
 
 Move quality improved with rating in both groups, but far more steeply for deliberated moves.
 Played-move regret fell by $0.074$ per $1000$ rating points for deliberated moves
@@ -43,11 +53,15 @@ using the intrinsic-performance-rating framework \citep{regan2011,biswas2015} in
 regret and match-rate proxies used here.
 
 \begin{figure}[t]\centering\includegraphics[width=0.92\linewidth]{figs/figR_instant_moves.png}
-\caption{\textbf{Deliberation amplifies the skill gap.} Move quality by player rating band,
-for moves played instantly (${\le}1$\,s, amber) versus deliberated (${\ge}10$\,s, dark), in
-non-forced positions with a healthy clock. \textbf{a}, Mean regret of the played move at full
-engine depth (win-probability units; lower is better). \textbf{b}, Rate of matching the
-engine-best move. In both panels the instant curve is markedly flatter across rating: skill
-separates players chiefly when they have time to search. Difficulty-adjusted, player-clustered
-estimates in the text; the pattern replicates in all four data pools.}
+\caption{\textbf{Deliberation amplifies the skill gap.} Moves played instantly (${\le}1$\,s,
+amber) versus deliberated (${\ge}10$\,s, dark), in non-forced positions with a healthy clock.
+To avoid the recognition-based selection that makes raw quality levels non-comparable between
+the groups (instant moves are self-selected as easier), the figure shows only the rating
+gradient \emph{within} each group. \textbf{a}, Change in mean played-move regret relative to
+the weakest rating band (each group anchored at its own baseline); the deliberated curve
+descends about twice as steeply, so quality improves faster with rating when players have time
+to search. \textbf{b}, Difficulty-adjusted, player-clustered slope of regret on rating
+(per $1000$ Elo) for each group, with $95\%$ confidence intervals; the two do not overlap. The
+pattern replicates in all four data pools (instant $-0.029$ to $-0.034$; deliberated $-0.072$
+to $-0.079$).}
 \label{fig:instant}\end{figure}

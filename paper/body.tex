@@ -3,7 +3,7 @@ and the primary interaction were fixed before held-out evaluation. Evaluation is
 throughout. T.~Maharaj formerly published as T.~T.~Biswas.}
 
 \section{Introduction}
-Sixty years of decision science rest on a quantity nobody can see. When Simon proposed that
+Seventy years of decision science rest on a quantity nobody can see. When Simon proposed that
 people \emph{satisfice}---search until an option clears an acceptability threshold, then
 stop---he made the depth of that search the load-bearing variable of bounded rationality
 \citep{simon1955,simon1956}. The same hidden quantity does the work in the fast-and-frugal
@@ -31,6 +31,22 @@ at a glance may be refuted only far down the tree, and a move that looks dull at
 reveal its point three moves later. This depth-resolved record lets us put a new question to
 every human mistake: \emph{at what depth does the flaw become visible?} And therefore: how
 deep must the player have looked?
+
+% >>> REV (Aug 2026 review pass): engage the classic search-depth debate (de Groot vs Charness
+% et seq.) that this paper answers at scale, and cite engine-as-yardstick precedents. <<<
+Whether expertise involves searching deeper at all is itself an old and unsettled question in
+this model system. De Groot's think-aloud protocols found that grandmasters and strong club
+players searched to similar depths and considered similar numbers of moves; what set the
+masters apart was that they looked at the right moves \citep{degroot1965}. Later studies with
+more players and finer measures found that depth does grow with skill
+\citep{charness1981,holding1985,campitelli2004}, though modestly and unevenly
+\citep{gobet1998}, and a re-examination seventy years on concluded that search and pattern
+knowledge are complementary rather than rival explanations \citep{connors2011}. Every one of
+these studies rests on a few dozen players thinking aloud over a handful of positions. Engines
+have since been used to score human moves against a near-perfect standard
+\citep{guid2006,regan2011,anderson2016}, but the depth at which a human's error becomes
+visible---the quantity the classic debate turns on---has not been read from that standard at
+scale.
 
 We call the answer the \textbf{depth of satisficing}---the depth at which the move a player
 chose stops looking better than the move they should have played. Our central empirical claim
@@ -139,6 +155,25 @@ swing-up decision carries roughly twice the rating information of a swing-down o
 recurs in every replication month below. What matters is not how large an error is, but at
 what depth the move's true worth appears.
 
+% >>> REV (Aug 2026 review pass): NEW model-free discriminant test -- depth vs error size.
+% Numbers from src/discriminant_depth.py; replicated in all four pools. <<<
+\paragraph{Depth is not the size of the error.}
+That claim can be tested directly, without the model. For every erroneous move (full-depth
+regret $\ge0.05$) define its \emph{exposure depth} as the first search depth at which its
+regret reaches half its final value---the point at which the flaw comes into view (Methods).
+Exposure depth is essentially uncorrelated with how large the error eventually proves to be
+(Spearman $\rho=+0.02$ in the primary month, and between $+0.01$ and $+0.03$ in every
+replication month): how far one must look to see a mistake and how much it costs are separate
+dimensions. And it is exposure depth that carries the skill signal. Holding error magnitude
+fixed, stronger players' errors are exposed deeper. Among the largest blunders (regret
+$>0.20$), exposure depth rises by $0.93$ plies per $1{,}000$ rating points (player-clustered
+SE $0.07$), from about $3.8$ plies below 1600 to $4.8$ above 2000, and the slope replicates at
+$1.07$, $0.85$ and $0.78$ plies in the three replication months (all $z>5$). The effect is
+graded by severity---weak for small inaccuracies, strongest for large blunders---so the errors
+that distinguish a strong player from a weak one are not smaller but \emph{better hidden}:
+mistakes a shallow search would not catch. Skill is legible in where an error surfaces, not in
+its size.
+
 \paragraph{Depth of satisficing rises with skill and collapses under time pressure.}
 Fitting the latent-depth model (Methods) and reading off each decision's posterior expected
 depth, the construct behaves exactly as a measure of deliberation should---provided, again,
@@ -146,7 +181,11 @@ that one looks within a time control, since pooling would conflate skill with av
 clock. Within classical games, the depth of satisficing climbs from about $10.8$ plies in the
 lowest rating band to about $13.7$ in the highest, with non-overlapping player-clustered 95\%
 intervals at the extremes (Spearman $\rho=+0.40$; rapid $+0.66$; blitz $+0.45$;
-Fig.~\ref{fig:f2}a). Bullet is the built-in negative control: the relationship vanishes
+Fig.~\ref{fig:f2}a). Engine plies are an ordinal ruler for effective depth, not literal
+look-ahead: a Stockfish search to depth 12 is heavily pruned and extended, and think-aloud
+studies put average human search at only a few plies \citep{degroot1965,charness1981}. What
+the scale supports is comparison---who satisfices deeper than whom, and when---and that is how
+it is used throughout. Bullet is the built-in negative control: the relationship vanishes
 ($\rho=-0.04$, flat across bands). When nobody can search, depth stops separating anybody,
 which rules out the construct being a re-description of rating. The same signature appears
 \emph{within} players: de-meaned depth rises across think-time quartiles, from $-0.14$ plies
@@ -353,6 +392,19 @@ item-response formulation adds a measurement-theoretic dividend: positions becom
 engine-derived difficulty and discrimination, so people and problems share one ply-denominated
 scale---rating systems generalised from game outcomes to individual decisions.
 
+% >>> REV (Aug 2026 review pass): place the result against the deeper-vs-better search debate. <<<
+The result also speaks to the oldest question in the psychology of chess: whether experts
+search deeper or merely search better \citep{degroot1965,charness1981,gobet1998,connors2011}.
+The depth of satisficing measures \emph{effective} depth---how far the chosen move survives
+scrutiny---and is deliberately agnostic about whether that depth is reached by looking further
+down a line or by selecting, from pattern, lines that do not fail early. The data suggest both
+operate and can be told apart. Skill is visible even on moves played in a second, where only
+pattern can act; yet expert errors of a given cost are better hidden rather than smaller, and,
+in a supplementary analysis, the skill gradient in move quality roughly doubles when players
+deliberate rather than move at once. De Groot's null and Charness's positive finding are then
+reconciled by the clock: with little time, strong and weak players look alike in depth and
+differ in pattern; given time, the strong convert it into depth and the weak cannot.
+
 The individual profiles suggest what the construct is for. Expertise is not a scalar: two
 players of equal rating can owe their strength to depth, to trap resistance, to deep
 discovery, or to the efficiency with which time becomes depth---echoing evidence that expert
@@ -394,7 +446,9 @@ sampled by the same frozen pipeline (identical seed, cell targets, and engine se
 processed once. The independent-pool item-response check uses 99{,}358 decisions by 945
 titled chess.com players harvested via the public Published-Data API. Synthetic agents
 (below) provide ground truth. All decisions are restricted to plies 9--120 to skip
-opening-book play.
+opening-book play; no further selection is applied, so every non-book decision in a sampled
+game is analysed and the sample is not conditioned on position difficulty or on the quality of
+the move played.
 
 \paragraph{Engine analysis and value scaling.}
 Positions are analysed with Stockfish~18 in multi-PV mode, recording each candidate move
@@ -448,6 +502,14 @@ Glicko-2 rating per time control, not comparable across controls), so no analysi
 ratings across controls; doing so would also confound skill with available clock. Per-band
 estimates carry player-clustered bootstrap 95\% intervals (1{,}000 resamples of players)
 \citep{efron1979}.
+
+\paragraph{Exposure depth.}
+For the model-free discriminant test, an erroneous move (full-depth regret $\ge0.05$) has
+exposure depth equal to the first grid depth at which its regret reaches half of its
+full-depth value. Within bins of full-depth regret (0.05--0.10, 0.10--0.20, $>$0.20), exposure
+depth is regressed on rating (per $1{,}000$ points) and move number with player-clustered
+standard errors, on online classical and rapid decisions; the same script is run unchanged on
+each replication month.
 
 \paragraph{Relation to the curve-intersection estimator.}
 The construct originates in a population-level heuristic \citep{biswas2015}: average the
@@ -573,8 +635,3 @@ design, and critically reviewed the manuscript. Both authors approved the final 
 \paragraph{Competing interests.}
 The authors declare no competing interests.
 
-\paragraph{Ethics.}
-The study uses only publicly released, openly licensed records of voluntary online and
-broadcast play; it involves no intervention and no private or personally identifying data
-beyond the public usernames and player names attached to those records, and so did not
-require ethical approval.

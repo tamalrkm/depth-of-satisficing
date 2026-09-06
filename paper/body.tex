@@ -83,7 +83,8 @@ Three things distinguish this work from earlier studies of chess errors and engi
 with a generative model: the player is a latent distribution over search depths, so the depth
 of satisficing is a posterior quantity with stated uncertainty rather than the crossing point
 of two fitted curves. Second, we do not assume that engine depth is a valid proxy for human
-reasoning depth; we test it---predictively, convergently, and differentially. Third, we
+reasoning depth; we test it---predictively, differentially, against planted ground truth, and
+under estimators given no rating information---and we report where it fails. Third, we
 subjected the construct to an adversarial replication programme: hypotheses, pipeline, and
 decision rules were pre-registered and then confirmed on untouched months of data, ending
 with a fully prospective test registered before its data existed \citep{nosek2018}. The
@@ -174,31 +175,53 @@ that distinguish a strong player from a weak one are not smaller but \emph{bette
 mistakes a shallow search would not catch. Skill is legible in where an error surfaces, not in
 its size.
 
-\paragraph{Depth of satisficing rises with skill and collapses under time pressure.}
-Fitting the latent-depth model (Methods) and reading off each decision's posterior expected
-depth, the construct behaves exactly as a measure of deliberation should---provided, again,
-that one looks within a time control, since pooling would conflate skill with available
-clock. Within classical games, the depth of satisficing climbs from about $10.8$ plies in the
-lowest rating band to about $13.7$ in the highest, with non-overlapping player-clustered 95\%
-intervals at the extremes (Spearman $\rho=+0.40$; rapid $+0.66$; blitz $+0.45$;
-Fig.~\ref{fig:f2}a). Engine plies are an ordinal ruler for effective depth, not literal
-look-ahead: a Stockfish search to depth 12 is heavily pruned and extended, and think-aloud
-studies put average human search at only a few plies \citep{degroot1965,charness1981}. What
-the scale supports is comparison---who satisfices deeper than whom, and when---and that is how
-it is used throughout. Bullet is the built-in negative control: the relationship vanishes
-($\rho=-0.04$, flat across bands). When nobody can search, depth stops separating anybody,
-which rules out the construct being a re-description of rating. The same signature appears
-\emph{within} players: de-meaned depth rises across think-time quartiles, from $-0.14$ plies
-on a player's fastest quarter of moves to $+0.33$ on their slowest (Fig.~\ref{fig:f2}b).
+% >>> REV (Sep 2026, rating-blind audit): E2 rewritten. The per-decision posterior's
+% correlation with rating is the learned context prior read back (update ~ 0); the evidence
+% is the pooled flat-prior per-player estimate under a fully rating-blind model. <<<
+\paragraph{Depth of satisficing rises with skill---in the pooled likelihood, not the per-decision posterior.}
+Fitting the latent-depth model (Methods) and reading off each held-out decision's posterior
+expected depth, the construct appears to behave exactly as a measure of deliberation should,
+provided one looks within a time control: posterior depth rises with rating in classical
+(Spearman $\rho=+0.40$), rapid ($+0.66$) and blitz ($+0.45$), and is flat in bullet ($-0.04$).
+That statistic, however, is the model's own \emph{learned prior} being read back. The prior
+$\pi_d(c)$ is conditioned on rating, and the correlation of rating with the prior's mean depth
+($+0.40$, $+0.67$, $+0.46$, $-0.04$) matches the posterior's to two decimals, while the
+correlation of rating with the \emph{update} the played move contributes---posterior minus
+prior---is $+0.01$ in every control. A single move says very little about depth. Whether the
+learned prior is itself supported by the data is a held-out likelihood question, and the
+answer is: only in slow play. Allowing the depth prior to depend on rating improves held-out
+move prediction in classical ($+0.0020$ nats; player-clustered 95\% CI $[+0.0018,+0.0022]$),
+does nothing in rapid ($-0.0000$ $[-0.0004,+0.0004]$), and \emph{worsens} it in blitz
+($-0.0008$ $[-0.0011,-0.0005]$) and bullet ($-0.0023$ $[-0.0026,-0.0021]$). The blitz
+relationship reported in earlier drafts and in our registrations is therefore an artefact of
+the prior, and we withdraw it.
+
+The non-circular estimate pools the weak per-decision evidence across each player's decisions
+instead of leaning on a prior. With the pattern prior evaluated at one fixed rating for every
+position, no rating in the depth prior, and a flat prior over depth, the depth that best
+explains a player's moves (Methods) still rises with rating in classical ($\rho=+0.14$ across
+1{,}477 players) and rapid ($+0.20$; 2{,}004), weakly in blitz ($+0.12$; 2{,}289), and not at
+all in bullet ($-0.03$; 2{,}071): the registered pattern, recovered with no rating information
+anywhere in the model (Fig.~\ref{fig:f2}). Across bands the pooled estimate climbs from about
+11 plies at 1200 to 13--17 plies at 2400 and above, and the same signs appear on held-out
+players alone.
+% %%E2-REPL%%
+Engine plies are an ordinal ruler for effective depth, not literal look-ahead: a Stockfish
+search to depth 12 is heavily pruned and extended, and think-aloud studies put average human
+search at only a few plies \citep{degroot1965,charness1981}. What the scale supports is
+comparison---who satisfices deeper than whom, and when---and that is how it is used
+throughout. Bullet remains the built-in negative control: when nobody can search, the pooled
+estimate stops separating anybody, which rules out the construct being a re-description of
+rating.
 
 \begin{figure}[t]\centering\includegraphics[width=0.92\linewidth]{figs/fig2_depth_rating_time.png}
-\caption{\textbf{Depth of satisficing rises with skill and with time to think.}
-\textbf{a}, Posterior depth of satisficing by rating band, within each time control (shaded
-bands, player-clustered bootstrap 95\% CIs). Depth rises with rating in classical
-(Spearman $\rho=+0.40$), rapid ($+0.66$) and blitz ($+0.45$); bullet, where no one can
-search, is the flat negative control ($\rho=-0.04$). \textbf{b}, Within-player effect:
-de-meaned depth by think-time quartile (dots, pooled means; bars, player-clustered bootstrap
-95\% CIs). The same players search deeper on their slower moves.}
+\caption{\textbf{Depth of satisficing rises with skill under a fully rating-blind estimator.}
+Per-player depth estimated from the move likelihood alone---pattern prior at one fixed rating
+for every position, no rating in the depth prior, flat prior over depth---pooled over each
+player's decisions, by rating band and time control (player-bootstrap 95\% CIs). The
+relationship holds in classical and rapid, weakly in blitz, and is absent in bullet.
+% %%FIG2-REPL%%
+}
 \label{fig:f2}\end{figure}
 
 % >>> REV-COAUTHOR (Jul 2026): deeper exposition of the time controls and their effect on
@@ -212,28 +235,35 @@ magnitude, tracking base budgets from thirty minutes down to one. This ladder is
 depth of satisficing responds to: with more clock a player can carry a line further before
 committing, so depth rises with skill in classical, rapid, and blitz, where there is time to
 search, and goes flat in bullet, where a move must be produced in about a second---from
-recognition rather than search. The within-player pattern says the same thing from the other
-side: the same person searches deeper on their slower moves (Fig.~\ref{fig:f2}b). The clock
-sets the ceiling on attainable depth, and skill is expressed in how fully a player uses the
-room the clock allows---which is why time pressure compresses the skill gap and slow play
-opens it.
+recognition rather than search. Within a player, however, the move evidence does not show
+deeper effective search on slower moves (below); what more time demonstrably buys is
+\emph{quality}, and it buys more of it for stronger players---the rating gradient of move
+quality roughly doubles on deliberated moves (Supplementary analysis). The clock sets the
+ceiling on attainable depth, and skill is expressed in how fully a player uses the room the
+clock allows---which is why time pressure compresses the skill gap and slow play opens it.
 
-\paragraph{Inferred depth tracks real thinking time it was never shown.}
-The construct's key non-circular test removes the clock from the model entirely. Refit with
-the clock feature zeroed, so that timing can play no role in the estimate, the model still
-assigns held-out depths that correlate with how long the player actually spent on the move
-(Spearman $\rho=+0.36$ overall), and the correlation peaks in the middlegame
-($+0.40$)---the phase where deliberation genuinely varies most---falling to $+0.33$ in the
-opening and $+0.29$ in the endgame (Fig.~\ref{fig:f3}). Inferred depth recovers observed
-deliberation without ever being told about time. That is convergent evidence that the
-posterior reflects thinking, not the rating prior it partly leans on.
-
-\begin{figure}[t]\centering\includegraphics[width=0.55\linewidth]{figs/fig3_depth_vs_time.png}
-\caption{\textbf{Depth inferred without the clock tracks real thinking time.}
-Held-out Spearman correlation between the clock-free model's per-decision depth and observed
-time-on-move, by game phase (dashed line, all phases pooled). The correlation peaks in the
-middlegame, where deliberation varies most.}
-\label{fig:f3}\end{figure}
+% >>> REV (Sep 2026, rating-blind audit): the former "clock-free depth tracks thinking time"
+% paragraph and its figure are replaced by a withdrawal. The correlation was the prior. <<<
+\paragraph{What the move evidence does not show: deeper search on slower moves.}
+We had taken a clock-free refit as the construct's convergent validation: with the
+remaining-clock feature zeroed, held-out posterior depth correlates with observed time-on-move
+($\rho=+0.36$, peaking in the middlegame). The decomposition above shows this is not the
+validation it appears to be. The clock-free prior still carries time class, move number,
+rating, and position swing, all of which co-vary with time spent; the prior's mean depth alone
+correlates with time at $+0.36$, identical to the posterior, while the played move's update
+correlates at $+0.02$. Within a time control the posterior is flat or negative except in
+classical ($+0.19$, again matching its prior). Two tests that use no depth prior then find no
+deeper effective search on slower moves. Pooling each player's decisions and splitting at the
+player's own median time, the flat-prior depth of the slower half is not greater than that of
+the faster half ($-0.14$ plies; player-bootstrap 95\% CI $[-0.21,-0.07]$; 3{,}684
+player--control cells). And model-free, within player and holding error size, position swing,
+and move number fixed, errors on slower moves are exposed \emph{shallower}, not deeper
+($-0.15$ plies per $e$-fold of time, player-clustered $z=-6.3$; paired slow minus fast $-0.26$
+plies in classical, $-0.19$ in rapid). We therefore withdraw the claim that inferred depth
+tracks thinking time. What deliberation demonstrably buys is quality: the rating gradient of
+move quality roughly doubles on deliberated moves (Supplementary analysis). Whether that
+reflects deeper search or better use of the same depth is not something the move evidence, at
+this density, can decide.
 
 \paragraph{A depth-aware model predicts human moves better, exactly where depth should matter.}
 If the depth of satisficing is real, knowing it should help predict what a human will play,
@@ -297,7 +327,8 @@ the depth of satisficing measures person ability.}
 \paragraph{Profiles, not a single number, separate expert styles.}
 Averaged per player from an \emph{elo-free} refit (so that recovering rating is not
 circular), four behavioural axes---depth of satisficing, trap susceptibility, deep-discovery
-rate, and time elasticity---summarise a player's style. Across 873 players with at least 100
+rate, and time elasticity---summarise a player's style (the time-elasticity axis is computed
+from the posterior and inherits its prior; Discussion). Across 873 players with at least 100
 decisions, the four-axis profile recovers within-pool rating at $R^2=0.10$ under nested
 cross-validation while the depth axis alone recovers none ($R^2\approx0$): the added axes
 carry the signal, reported on the honest within-pool scale rather than the cross-pool one
@@ -345,8 +376,8 @@ agent).}
 We pre-registered hypotheses, pipeline, and decision rules, and then ran the frozen pipeline
 once on each of three untouched Lichess months \citep{nosek2018}. The first replication
 (2026-05; 179{,}360 decisions; OSF \href{https://doi.org/10.17605/OSF.IO/KB4ZQ}{KB4ZQ})
-confirmed the non-circular core---clock-free depth tracked thinking time ($\rho=+0.30$,
-middlegame peak), and the registered swing~$\times$~time-control interaction held ($+0.049$
+reproduced the registered clock-free correlation ($\rho=+0.30$, middlegame peak; a
+statistic we now know to be carried by the prior, above), and the registered swing~$\times$~time-control interaction held ($+0.049$
 nats, mixed-effects $p<10^{-36}$)---but failed its own strict rule because one arm of one
 primary (blitz, registered as positive) came out flat, and it exposed a swing-label
 convention error: the single-decision rating signal sits in swing-\emph{up} decisions, not
@@ -354,8 +385,8 @@ swing-down as first registered. We disclosed both, corrected the hypotheses, and
 second, fully prospective protocol (OSF \href{https://doi.org/10.17605/OSF.IO/A6NYK}{A6NYK})
 whose primary dataset---Lichess 2026-06---did not yet exist at registration. A robustness
 month processed under the same registration (2026-04; 168{,}654 decisions) meanwhile
-reproduced the slow-control rating relationship (classical $\rho=+0.47$, rapid $+0.54$), the
-convergent-time result ($+0.40$), and the interaction ($+0.076$ nats, $p<10^{-48}$).
+reproduced the registered rating relationship (classical $\rho=+0.47$, rapid $+0.54$), the
+clock-free correlation ($+0.40$), and the interaction ($+0.076$ nats, $p<10^{-48}$).
 
 The prospective month then arrived and was processed once. All three primary hypotheses
 replicated, satisfying the registered decision rule. On 203{,}248 decisions from 3{,}707
@@ -370,15 +401,30 @@ showing, came back clearly positive ($\rho=+0.39$ $[+0.25,+0.50]$); across the f
 blitz relationship now reads $+0.45$, $\approx0$, $+0.19$, $+0.39$---real but unstable, in
 contrast to the robust slow controls and the reliably null bullet. And the deep-discovery
 asymmetry replicated in its corrected direction (swing-up $R^2=0.0049$ versus swing-down
-$0.0027$), as it has in every month examined. The construct's central claims thus rest on a
-confirmation that was, in the strict sense, predicted in public before the behaviour occurred.
+$0.0027$), as it has in every month examined.
+
+% >>> REV (Sep 2026, rating-blind audit): disclosure that H1 and H3 as registered were tests
+% of the model's learned prior; non-circular re-test of H1; H3 withdrawn. <<<
+Two of the three registered primaries must now be read differently. H1 (posterior depth
+versus rating) and H3 (clock-free posterior depth versus time) were operationalised, in both
+registrations, as correlations of the model's per-decision posterior, which the decomposition
+above shows to be dominated by the learned context prior. They replicated as registered, but
+as tests of the prior rather than of the move evidence; we registered them in good faith and
+discovered the problem only in a later audit. H4, the prediction differential, is a likelihood
+test and stands as registered. Re-tested with the rating-blind pooled estimator, H1 survives:
+% %%REPL-NONCIRC%%
+H3 does not survive the non-circular within-player tests reported above, and we record it as a
+withdrawn claim rather than a confirmed one. The registered confirmation was, in the strict
+sense, predicted in public before the behaviour occurred; the audit shows which of its parts
+that prediction actually tested.
 
 \section{Discussion}
 Errors are usually the noise of behavioural data. Here they are the signal. Where success is
 widely shared, the fine structure of failure---the depth at which a flaw becomes
 visible---turns out to be a stable, measurable signature of how a person reasons: it scales
-with expertise, contracts under time pressure, tracks deliberation it was never shown, and
-improves prediction exactly in the regime where deep reasoning has room to operate. The
+with expertise under an estimator given no rating information, is absent when the clock
+removes the possibility of search, and improves prediction exactly in the regime where deep
+reasoning has room to operate. The
 pattern supports a specific mechanism: people commit to the best option found at the search
 horizon they reach, rather than integrating over the whole trajectory---consistent with
 theoretical results that level-$k$ predictions are independent of higher-order belief tails
@@ -387,7 +433,8 @@ decision-tree pruning \citep{huys2012}, and bounded evidence accumulation
 \citep{ratcliff2008}. Where planning depth has been measured before, it required controlled
 laboratory games and explicit search models \citep{callaway2022,vanopheusden2023}; here the
 same construct is read non-invasively from natural, high-stakes play at population scale,
-against a depth-resolved value standard, and it survives a prospective registered test. The
+against a depth-resolved value standard, and its registered prediction differential survives
+a prospective test. The
 item-response formulation adds a measurement-theoretic dividend: positions become items with
 engine-derived difficulty and discrimination, so people and problems share one ply-denominated
 scale---rating systems generalised from game outcomes to individual decisions.
@@ -413,14 +460,19 @@ satisficing could, in principle, select problems pitched just beyond it; a ratin
 on decisions rather than outcomes could equate skill across pools that never play each other.
 
 The limitations are the flip side of the design. Engine search depth is a \emph{validated
-proxy} for human selective search---validated by convergence with thinking time and by
-recovery of planted depth---but it is not isomorphic to human search, which is narrow, uneven,
-and pattern-guided. The depth-of-satisficing posterior leans partly on a rating-conditioned
-prior; per-decision move evidence is weak, which is why the clock-free and synthetic tests,
-not the posterior's absolute scale, carry the claims. The average predictive gain is small,
-and the case rests on its registered differential rather than its size. The blitz
-rating--depth relationship is genuinely variable across months and should not be quoted as a
-stable effect. And chess players are a highly trained, self-selected population in an
+proxy} for human selective search---validated by recovery of planted depth and by the
+model-free exposure-depth and prediction results, not, as we first thought, by convergence
+with thinking time---but it is not isomorphic to human search, which is narrow, uneven, and
+pattern-guided. The per-decision posterior is dominated by its context prior: the played move
+shifts it by little, so correlations of the posterior with anything in that context---rating,
+time class, remaining clock---are largely the prior read back, and two of our registered
+statistics were of that kind. Claims about depth therefore rest on estimators that pool
+evidence across a player's decisions with no prior over depth, on model-free exposure depth,
+on the prediction differential, and on planted-depth recovery, never on per-decision
+posteriors; the time-elasticity profile axis inherits the same limitation and should be read
+as descriptive. The average predictive gain is small, and the case rests on its registered
+differential rather than its size. The blitz rating--depth relationship is not supported once
+the prior is removed and should not be quoted. And chess players are a highly trained, self-selected population in an
 adversarial task; the approach extends in principle to any domain with skill-graded decisions
 and a depth-resolved value standard---a value network queried at increasing depth in Go, or
 staged value estimates in planning tasks---but that generality remains to be demonstrated.
@@ -561,9 +613,21 @@ hypothesis is an interaction: the fusion's gain over state-only is larger in hig
 low-swing positions and in classical than blitz. It is tested with a player-clustered
 bootstrap and a linear mixed-effects model with player random intercepts.
 
-\paragraph{Convergent and recovery validation.}
-Convergent: refit with the clock feature zeroed, then correlate held-out $\hat d$ with
-observed time-on-move, by game phase. Recovery: agents play a soft-max
+\paragraph{Decomposition, rating-blind estimation, and recovery validation.}
+Decomposition: for a fitted model, each held-out decision's prior mean depth
+$\sum_d d\,\pi_d(c)$ is compared with its posterior $\hat d$; the update is their difference.
+Held-out likelihood tests refit the model with the rating (or remaining-clock) context feature
+zeroed and compare per-decision negative log-likelihood, with player-clustered bootstrap
+intervals. Rating-blind per-player depth: the pattern prior is recomputed with Maia-3
+conditioned on one fixed rating (1{,}950, the online sample median) for every position; the
+model is refit with the rating context feature zeroed to obtain $(\alpha,\beta)$; for each
+(player, control) with at least 30 decisions the depth log-likelihoods $\log P(y_i\mid d)$ are
+summed over decisions and a flat prior over the grid gives $\hat d$; Spearman against rating
+carries a 2{,}000-resample player bootstrap. The same estimator, split at each player's median
+time-on-move, gives the within-player slow-versus-fast test; its model-free counterpart
+regresses exposure depth on log time-on-move with player fixed effects and player-clustered
+standard errors, controlling for error magnitude, position swing, and move number. Recovery:
+agents play a soft-max
 ($\beta_{\text{gen}}{=}6$) over fixed-depth win probabilities; their games pass through the
 identical pipeline, and a per-agent flat-prior posterior over depth (search likelihood, with
 the population $\beta$ fit) is compared with the planted depth.

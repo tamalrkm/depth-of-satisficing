@@ -334,29 +334,30 @@ the depth of satisficing measures person ability.}
 
 \paragraph{Profiles, not a single number, separate expert styles.}
 Averaged per player from an \emph{elo-free} refit (so that recovering rating is not
-circular), four behavioural axes---depth of satisficing, trap susceptibility, deep-discovery
-rate, and time elasticity---summarise a player's style (the time-elasticity axis is computed
-from the posterior and inherits its prior; Discussion). Across 873 players with at least 100
-decisions, the four-axis profile recovers within-pool rating at $R^2=0.10$ under nested
-cross-validation while the depth axis alone recovers none ($R^2\approx0$): the added axes
-carry the signal, reported on the honest within-pool scale rather than the cross-pool one
-(which flatters recovery by conflating skill with pool membership). Among elite players the
+circular), three behavioural axes---depth of satisficing, trap susceptibility, and
+deep-discovery rate---summarise a player's style. (An earlier draft carried a fourth,
+time-elasticity axis, the within-player slope of posterior depth on think-time; it is computed
+from the posterior, inherits its prior, and on its own recovered $R^2=0.01$, so it is dropped.)
+Across 873 players with at least 100 decisions, the three-axis profile recovers within-pool
+rating at $R^2=0.09$ under nested cross-validation while the depth axis alone recovers none
+($R^2\approx0$): the two model-free behavioural rates carry the signal, reported on the honest
+within-pool scale rather than the cross-pool one (which flatters recovery by conflating skill
+with pool membership). Among elite players the
 profile also resolves a known embarrassment of one-dimensional scores: a bare depth ranking
 inverts the true order of the world's best (9 of 15 elite pairs discordant), ranking, for
-example, Abdusattorov and Nepomniachtchi above Carlsen. The four axes instead attribute each
-player's strength differently---Nakamura is the most trap-resistant of the six yet among the
-least time-elastic (a blitz specialist who reaches his depth \emph{fast}), while Carlsen
-converts thinking time into depth more steeply than anyone---and the inversions disappear
-(Fig.~\ref{fig:profiles}).
+example, Abdusattorov and Nepomniachtchi above Carlsen. The three axes instead attribute each
+player's strength differently---Nakamura is at once the most trap-resistant and the strongest
+deep-discoverer of the six, while Abdusattorov and Nepomniachtchi lead on raw depth alone---and
+the profile's ranking cuts the inversions from 9 to 4 of the 15 pairs (Fig.~\ref{fig:profiles}).
 
-\begin{figure}[t]\centering\includegraphics[width=\linewidth]{figs/fig5_player_profiles.png}
-\caption{\textbf{Four behavioural axes separate elite styles that one number confuses.}
+\begin{figure}[t]\centering\includegraphics[width=\linewidth]{figs/fig5_player_profiles3.png}
+\caption{\textbf{Three behavioural axes separate elite styles that one number confuses.}
 Profile z-scores (versus the full population) for the six elite players with the most
 analysed decisions, ordered by rating. A one-dimensional depth score inverts elite ratings (9
-of 15 pairs discordant); the four-axis profile recovers within-pool rating across 873 players
-($R^2=0.10$, nested cross-validation) where depth alone recovers none ($R^2\approx0$), and
-reads the styles directly---for example Nakamura as most trap-resistant but among the least
-time-elastic, Carlsen as converting think time into depth most steeply.}
+of 15 pairs discordant); the three-axis profile recovers within-pool rating across 873 players
+($R^2=0.09$, nested cross-validation) where depth alone recovers none ($R^2\approx0$), and
+reads the styles directly---for example Nakamura as at once the most trap-resistant and the
+strongest deep-discoverer of the six.}
 \label{fig:profiles}\end{figure}
 
 \paragraph{The instrument recovers depth it has never seen.}
@@ -400,8 +401,8 @@ The prospective month then arrived and was processed once. All three primary hyp
 replicated, satisfying the registered decision rule. On 203{,}248 decisions from 3{,}707
 players: depth rose with rating within every slow control (classical $\rho=+0.23$, 95\% CI
 $[+0.15,+0.35]$; rapid $+0.72$ $[+0.59,+0.79]$) with bullet null as predicted ($+0.08$
-$[-0.03,+0.19]$); clock-free depth tracked observed thinking time ($\rho=+0.32$, middlegame
-peak $+0.36$); and the depth-aware model beat the state-only model overall ($+0.010$ nats,
+$[-0.03,+0.19]$); the registered clock-free correlation with thinking time held ($\rho=+0.32$,
+middlegame peak $+0.36$; a prior-carried statistic, below); and the depth-aware model beat the state-only model overall ($+0.010$ nats,
 95\% CI $[+0.003,+0.017]$) with the registered interaction intact ($+0.068$ nats
 $[+0.055,+0.079]$; mixed-effects $\beta=+0.059$, $p<10^{-42}$). Two secondary outcomes are
 worth reporting straight. Blitz, which we had over-corrected to ``null'' after its flat 2026-05
@@ -464,7 +465,7 @@ differ in pattern; given time, the strong convert it into depth and the weak can
 
 The individual profiles suggest what the construct is for. Expertise is not a scalar: two
 players of equal rating can owe their strength to depth, to trap resistance, to deep
-discovery, or to the efficiency with which time becomes depth---echoing evidence that expert
+discovery---echoing evidence that expert
 flexibility itself varies \citep{bilalic2008}. An agent that estimates a person's depth of
 satisficing could, in principle, select problems pitched just beyond it; a rating system built
 on decisions rather than outcomes could equate skill across pools that never play each other.
@@ -479,8 +480,8 @@ time class, remaining clock---are largely the prior read back, and two of our re
 statistics were of that kind. Claims about depth therefore rest on estimators that pool
 evidence across a player's decisions with no prior over depth, on model-free exposure depth,
 on the prediction differential, and on planted-depth recovery, never on per-decision
-posteriors; the time-elasticity profile axis inherits the same limitation and should be read
-as descriptive. The average predictive gain is small, and the case rests on its registered
+posteriors; a time-elasticity profile axis used in an earlier draft inherited the same
+limitation and has been dropped. The average predictive gain is small, and the case rests on its registered
 differential rather than its size. The blitz rating--depth relationship is not supported once
 the prior is removed and should not be quoted. And chess players are a highly trained, self-selected population in an
 adversarial task; the approach extends in principle to any domain with skill-graded decisions
@@ -585,8 +586,8 @@ $r_d$: a per-decision quantity with credible intervals that supports within-cont
 within-player contrasts and is identifiable against synthetic ground truth. The population
 curve is stable only because it averages thousands of weak per-move signals, which the
 crossing view conceals and our identifiability test makes explicit: recovered depth is
-ordinal and prior-compressed, which is why the convergent and identifiability tests, not the
-posterior's absolute scale, carry the claims. Where the two views can be compared they
+ordinal and prior-compressed, which is why the rating-blind pooled estimator, the model-free
+tests, and the identifiability test---not the posterior's absolute scale---carry the claims. Where the two views can be compared they
 agree---stronger players satisfice deeper and err less---now within time control, at far
 larger scale, on win-probability evaluation, with a human-pattern prior, and under a
 registered replication programme.
@@ -609,9 +610,9 @@ rating-band level.
 \paragraph{Profiles and rating recovery.}
 Per player with at least 100 decisions: mean $\hat d$; trap susceptibility (rate of played
 swing-down moves, weighted by shallow attractiveness); deep-discovery rate (rate of played
-swing-up moves); and time elasticity (within-player slope of $\hat d$ on log think-time). The
-depth axis comes from a model fit with the rating feature removed, keeping recovery
-non-circular. Rating is predicted from the standardised profile by ridge regression under
+swing-up moves). The depth axis comes from a model fit with the rating feature removed,
+keeping recovery non-circular; a time-elasticity axis (within-player slope of $\hat d$ on log
+think-time) was dropped because it is a function of the posterior's clock-dependent prior. Rating is predicted from the standardised profile by ridge regression under
 nested five-fold cross-validation (inner folds select the penalty), within pool (z-scored per
 time control, over-the-board play its own pool). The elite case study reports the
 standardised axes for the six broadcast players with the most analysed decisions.

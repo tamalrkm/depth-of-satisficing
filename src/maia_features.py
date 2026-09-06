@@ -88,8 +88,12 @@ def tokens_for(fen, hist_uci, mcfg):
     return get_historical_tokens(hist, mcfg, 0.0, 0.0, 0.0, 0.0), board
 
 
-def main(cfg, model_name=None, device=None, batch_size=256, limit=0):
+def main(cfg, model_name=None, device=None, batch_size=256, limit=0, fixed_elo=None):
+    """fixed_elo: if set, feed this rating (self AND opponent) to Maia for EVERY position --
+    the rating-blind prior used by the robustness check (src/robustness_fixed_maia.py)."""
     model_name = model_name or cfg["maia"]["model"]
+    if fixed_elo is not None:
+        print(f"*** RATING-BLIND PRIOR: Maia-3 conditioned on a FIXED rating of {fixed_elo} for every position ***")
     device = device or cfg["maia"].get("device", "cuda")
     if device.startswith("cuda") and not torch.cuda.is_available():
         device = "cpu"
@@ -132,8 +136,11 @@ def main(cfg, model_name=None, device=None, batch_size=256, limit=0):
         if not any(board.legal_moves):
             continue
         buf_tok.append(tokens)
-        buf_self.append(int(r.side_to_move_elo))
-        buf_oppo.append(int(getattr(r, "oppo_elo", r.side_to_move_elo)))
+        if fixed_elo is not None:
+            buf_self.append(int(fixed_elo)); buf_oppo.append(int(fixed_elo))
+        else:
+            buf_self.append(int(r.side_to_move_elo))
+            buf_oppo.append(int(getattr(r, "oppo_elo", r.side_to_move_elo)))
         buf_board.append(board)
         buf_pos.append(r.pos_id)
         if len(buf_tok) >= batch_size:
@@ -153,5 +160,7 @@ if __name__ == "__main__":
     ap.add_argument("--device", default=None, help="override cfg.maia.device")
     ap.add_argument("--batch-size", type=int, default=256)
     ap.add_argument("--limit", type=int, default=0, help="cap #positions (0 = all)")
+    ap.add_argument("--fixed-elo", type=int, default=None,
+                    help="condition Maia on this ONE rating for every position (rating-blind prior)")
     a = ap.parse_args()
-    main(yaml.safe_load(open(a.config)), a.model, a.device, a.batch_size, a.limit)
+    main(yaml.safe_load(open(a.config)), a.model, a.device, a.batch_size, a.limit, a.fixed_elo)

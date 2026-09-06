@@ -85,7 +85,7 @@ def main():
         for lab, s in slices:
             print(f"  {lab:16s} {s.sum():>7,} {rho(post,s):>+10.3f} {rho(prior,s):>+8.3f} {rho(upd,s):>+8.3f}")
         # within-player: de-mean both per player (players with >=20 valid held-out decisions)
-        cnt = pd.Series(vpl[ok]).value_counts(); keep = ok & pd.Series(vpl).map(cnt).fillna(0).to_numpy().astype(int) >= 20
+        cnt = pd.Series(vpl[ok]).value_counts(); keep = ok & (pd.Series(vpl).map(cnt).fillna(0).to_numpy().astype(int) >= 20)   # parenthesised: & binds tighter than >=
         for lab, s in [("within-player (all)", keep)] + [(f"within-player, {t}", keep & (vtc == t)) for t in TC]:
             if s.sum() < 500: continue
             g = vpl[s]

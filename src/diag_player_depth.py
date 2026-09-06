@@ -30,7 +30,7 @@ def logp_y_given_d(model, dev, delta, logq, mask, dmask, ctx, y):
     return torch.cat(out).numpy()
 
 
-def run(tensor, cfg, label):
+def run(tensor, cfg, label, out_parquet=None):
     mc = cfg["model"]; dev = "cuda" if torch.cuda.is_available() else "cpu"
     blob = torch.load(tensor, map_location="cpu", weights_only=False)
     delta, logq, mask, ctx, y = (blob[k] for k in ["delta", "logq", "move_mask", "context", "y"])
@@ -46,9 +46,13 @@ def run(tensor, cfg, label):
     grid = np.array(mc["depth_grid"], float)
     df = pd.DataFrame({"player": players, "elo": elo, "tc": tc, "src": src, "val": va})
     df = df[df["src"] == "online"]
+    rng = np.random.default_rng(0); saved = []
+    def boot_rho(r):
+        bs = [spearmanr(r[i, 0], r[i, 1]).correlation for i in (rng.integers(0, len(r), len(r)) for _ in range(2000))]
+        return np.percentile(bs, 2.5), np.percentile(bs, 97.5)
     for scope, sub in [("all players", df), ("held-out players only", df[df["val"]])]:
         print(f"  --- {scope}: flat-prior per-(player, control) E[d], cells with >= {MIN_DEC} decisions")
-        print(f"  {'control':10s} {'players':>8s} {'rho(rating, E[d])':>18s}   per-band mean E[d]")
+        print(f"  {'control':10s} {'players':>8s} {'rho [95% CI]':>24s}   per-band mean E[d]")
         for t in TC:
             g = sub[sub["tc"] == t]
             cells = g.groupby("player").indices
@@ -58,18 +62,32 @@ def run(tensor, cfg, label):
                 L = lp[g.index.values[idx]].sum(0); L -= L.max(); w = np.exp(L); w /= w.sum()
                 rows.append((g["elo"].values[idx].mean(), (w * grid).sum()))
             if len(rows) < 30: print(f"  {t:10s} {len(rows):>8d}   (too few)"); continue
-            r = np.array(rows); rho = spearmanr(r[:, 0], r[:, 1]).correlation
+            r = np.array(rows); rho = spearmanr(r[:, 0], r[:, 1]).correlation; lo, hi = boot_rho(r)
             bands = [band_of(e) for e in r[:, 0]]
             bm = [r[np.array(bands) == b, 1].mean() if (np.array(bands) == b).sum() >= 10 else np.nan for b in range(len(BANDS))]
-            print(f"  {t:10s} {len(rows):>8d} {rho:>+18.3f}   " + " ".join(f"{v:.2f}" if not np.isnan(v) else "-" for v in bm))
+            print(f"  {t:10s} {len(rows):>8d} {rho:>+8.3f} [{lo:+.3f},{hi:+.3f}]   " + " ".join(f"{v:.2f}" if not np.isnan(v) else "-" for v in bm))
+            if scope == "all players":
+                saved += [{"label": label, "tc": t, "elo": e, "Ed": d_} for e, d_ in r]
+    if out_parquet and saved:
+        pd.DataFrame(saved).to_parquet(out_parquet, index=False); print(f"  saved per-player table -> {out_parquet}")
+
+
+MONTHS = {"2025-09": "data/train.pt", "2026-04": "data/repl04/train.pt",
+          "2026-05": "data/repl/train.pt", "2026-06": "data/repl06/train.pt"}
 
 
 def main():
-    cfg = yaml.safe_load(open("config.yaml"))
-    run(cfg["data"]["train_tensor"], cfg, "ORIGINAL tensor: rating-conditioned Maia, elo-free context, flat depth prior")
+    import argparse
+    ap = argparse.ArgumentParser(); ap.add_argument("--all-months", action="store_true"); a = ap.parse_args()
+    cfg = yaml.safe_load(open("config.yaml")); os.makedirs("data/diag", exist_ok=True)
     if os.path.exists("data/train_fixed1950.pt"):
-        cfgf = yaml.safe_load(open("config_fixed1950.yaml"))
-        run("data/train_fixed1950.pt", cfgf, "FIXED-1950 Maia tensor: fully rating-blind, flat depth prior")
+        run("data/train_fixed1950.pt", yaml.safe_load(open("config_fixed1950.yaml")),
+            "2025-09 FULLY RATING-BLIND (fixed-1950 Maia, no rating in context, flat depth prior)",
+            "data/diag/player_depth_2025-09_blind.parquet")
+    for m, t in (MONTHS.items() if a.all_months else list(MONTHS.items())[:1]):
+        if os.path.exists(t):
+            run(t, cfg, f"{m} (rating-conditioned Maia, no rating in context, flat depth prior)",
+                f"data/diag/player_depth_{m}.parquet")
 
 
 if __name__ == "__main__":

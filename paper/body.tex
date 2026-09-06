@@ -199,13 +199,18 @@ the prior, and we withdraw it.
 The non-circular estimate pools the weak per-decision evidence across each player's decisions
 instead of leaning on a prior. With the pattern prior evaluated at one fixed rating for every
 position, no rating in the depth prior, and a flat prior over depth, the depth that best
-explains a player's moves (Methods) still rises with rating in classical ($\rho=+0.14$ across
-1{,}477 players) and rapid ($+0.20$; 2{,}004), weakly in blitz ($+0.12$; 2{,}289), and not at
-all in bullet ($-0.03$; 2{,}071): the registered pattern, recovered with no rating information
-anywhere in the model (Fig.~\ref{fig:f2}). Across bands the pooled estimate climbs from about
-11 plies at 1200 to 13--17 plies at 2400 and above, and the same signs appear on held-out
-players alone.
-% %%E2-REPL%%
+explains a player's moves (Methods) still rises with rating in classical ($\rho=+0.14$, 95\%
+player-bootstrap CI $[+0.09,+0.19]$, 1{,}477 players) and rapid ($+0.20$ $[+0.15,+0.24]$;
+2{,}004), weakly in blitz ($+0.12$ $[+0.08,+0.16]$; 2{,}289), and not at all in bullet
+($-0.03$ $[-0.08,+0.01]$; 2{,}071): the registered pattern, recovered with no rating
+information anywhere in the model (Fig.~\ref{fig:f2}a). Across bands the pooled estimate
+climbs from about 11 plies at 1200 to 13--17 plies at 2400 and above, and the same signs
+appear on held-out players alone. Run unchanged on each replication month, the estimator
+reproduces the pattern every time: classical $+0.23$ $[+0.13,+0.33]$, $+0.31$ $[+0.21,+0.41]$
+and $+0.19$ $[+0.08,+0.29]$ in 2026-04, 2026-05 and the prospective 2026-06; rapid $+0.20$
+$[+0.11,+0.29]$, $+0.22$ $[+0.12,+0.31]$ and $+0.28$ $[+0.19,+0.37]$; bullet $-0.11$, $+0.01$
+and $+0.00$, never reliably positive; blitz positive with an interval excluding zero in only
+two months of four (Fig.~\ref{fig:f2}b).
 Engine plies are an ordinal ruler for effective depth, not literal look-ahead: a Stockfish
 search to depth 12 is heavily pruned and extended, and think-aloud studies put average human
 search at only a few plies \citep{degroot1965,charness1981}. What the scale supports is
@@ -214,14 +219,17 @@ throughout. Bullet remains the built-in negative control: when nobody can search
 estimate stops separating anybody, which rules out the construct being a re-description of
 rating.
 
-\begin{figure}[t]\centering\includegraphics[width=0.92\linewidth]{figs/fig2_depth_rating_time.png}
+\begin{figure}[t]\centering\includegraphics[width=0.92\linewidth]{figs/fig2_player_depth_blind.png}
 \caption{\textbf{Depth of satisficing rises with skill under a fully rating-blind estimator.}
 Per-player depth estimated from the move likelihood alone---pattern prior at one fixed rating
 for every position, no rating in the depth prior, flat prior over depth---pooled over each
 player's decisions, by rating band and time control (player-bootstrap 95\% CIs). The
 relationship holds in classical and rapid, weakly in blitz, and is absent in bullet.
-% %%FIG2-REPL%%
-}
+\textbf{a}, 2025-09: per-band mean per-player depth by control. \textbf{b}, Spearman
+correlation of rating with per-player depth, by control, in the primary month (fully
+rating-blind, starred) and in each replication month run with the same estimator (no rating
+in the depth prior, flat prior over depth; 95\% player-bootstrap CIs). Classical and rapid
+are positive in every month, bullet is null, and blitz is weak and inconsistent.}
 \label{fig:f2}\end{figure}
 
 % >>> REV-COAUTHOR (Jul 2026): deeper exposition of the time controls and their effect on
@@ -411,8 +419,10 @@ registrations, as correlations of the model's per-decision posterior, which the 
 above shows to be dominated by the learned context prior. They replicated as registered, but
 as tests of the prior rather than of the move evidence; we registered them in good faith and
 discovered the problem only in a later audit. H4, the prediction differential, is a likelihood
-test and stands as registered. Re-tested with the rating-blind pooled estimator, H1 survives:
-% %%REPL-NONCIRC%%
+test and stands as registered. Re-tested with the rating-blind pooled estimator, H1 survives: classical and rapid are
+positive with intervals excluding zero in every month, including the prospective one
+(classical $+0.19$ $[+0.08,+0.29]$, rapid $+0.28$ $[+0.19,+0.37]$ on 2026-06), and bullet is
+null in every month (Fig.~\ref{fig:f2}b).
 H3 does not survive the non-circular within-player tests reported above, and we record it as a
 withdrawn claim rather than a confirmed one. The registered confirmation was, in the strict
 sense, predicted in public before the behaviour occurred; the audit shows which of its parts
@@ -623,7 +633,10 @@ conditioned on one fixed rating (1{,}950, the online sample median) for every po
 model is refit with the rating context feature zeroed to obtain $(\alpha,\beta)$; for each
 (player, control) with at least 30 decisions the depth log-likelihoods $\log P(y_i\mid d)$ are
 summed over decisions and a flat prior over the grid gives $\hat d$; Spearman against rating
-carries a 2{,}000-resample player bootstrap. The same estimator, split at each player's median
+carries a 2{,}000-resample player bootstrap. Replication months use their existing
+rating-conditioned pattern prior with the same rating-free depth estimation; on the primary
+month the two versions agree (classical $+0.139$ versus $+0.140$). The same estimator, split
+at each player's median
 time-on-move, gives the within-player slow-versus-fast test; its model-free counterpart
 regresses exposure depth on log time-on-move with player fixed effects and player-clustered
 standard errors, controlling for error magnitude, position swing, and move number. Recovery:

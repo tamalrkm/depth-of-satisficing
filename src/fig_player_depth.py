@@ -68,10 +68,12 @@ def main():
             r, lo, hi = rho_ci(d[d["tc"] == t])
             if np.isnan(r): continue
             ax[1].errorbar(i + xoff[j], r, yerr=[[r - lo], [hi - r]], fmt="o", ms=4.5, lw=1.6, capsize=2.5,
-                           color=figstyle.TC_COLORS[t], alpha=0.55 + 0.45 * (j == 0), zorder=3, label=k if i == 0 else None)
+                           color=figstyle.TC_COLORS[t], alpha=0.55 + 0.45 * (j == 0), zorder=3)
     figstyle.zero_line(ax[1]); ax[1].set_xticks(range(len(TC))); ax[1].set_xticklabels(TC)
     ax[1].set_ylabel("Spearman(rating, per-player depth)"); ax[1].set_title("replication across months")
-    ax[1].legend(frameon=False, fontsize=7, title="month (* fully blind)", title_fontsize=7, loc="upper right")
+    ax[1].text(0.02, 0.97, "points, left to right within each control:\n" + ", ".join(k for k, _ in tabs)
+               + "\n(* fully rating-blind; others: no rating in the depth prior)",
+               transform=ax[1].transAxes, fontsize=6.8, color=figstyle.INK2, va="top", ha="left")
     figstyle.panel_label(ax[1], "b")
     figstyle.save(fig, "paper/figs/fig2_player_depth_blind.png"); print("wrote paper/figs/fig2_player_depth_blind.png")
 

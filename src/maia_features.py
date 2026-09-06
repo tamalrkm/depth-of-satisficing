@@ -25,6 +25,8 @@ Run:
     python src/maia_features.py --config config.yaml [--model maia3-5m] [--limit N]
 """
 import argparse
+import glob
+import os
 from collections import deque
 
 import chess
@@ -88,7 +90,8 @@ def tokens_for(fen, hist_uci, mcfg):
     return get_historical_tokens(hist, mcfg, 0.0, 0.0, 0.0, 0.0), board
 
 
-def main(cfg, model_name=None, device=None, batch_size=256, limit=0, fixed_elo=None):
+def main(cfg, model_name=None, device=None, batch_size=256, limit=0, fixed_elo=None,
+         offset=0, out=None, resume=False, checkpoint_every=50000):
     """fixed_elo: if set, feed this rating (self AND opponent) to Maia for EVERY position --
     the rating-blind prior used by the robustness check (src/robustness_fixed_maia.py)."""
     model_name = model_name or cfg["maia"]["model"]
@@ -102,8 +105,22 @@ def main(cfg, model_name=None, device=None, batch_size=256, limit=0, fixed_elo=N
     model = load_model(mcfg)
 
     sel = pd.read_parquet(cfg["data"]["selected"])
-    if limit:
-        sel = sel.iloc[:limit]
+    # --- checkpointing / resume: results are written as part files every `checkpoint_every`
+    # positions and assembled at the end, so a killed run loses at most one chunk and
+    # `--resume` continues from the last completed part.
+    out = out or cfg["data"]["maia_q"]
+    base = out.rsplit(".parquet", 1)[0]
+    def part_name(s_, e_): return f"{base}.part_{s_:07d}_{e_:07d}.parquet"
+    def existing_parts(): return sorted(glob.glob(f"{base}.part_*_*.parquet"))
+    if resume:
+        ends = [int(os.path.basename(q).rsplit("_", 1)[1].split(".")[0]) for q in existing_parts()]
+        if ends:
+            offset = max(ends)
+            print(f"resume: {len(ends)} part file(s) found -> starting at position {offset}")
+    n_total = len(sel)
+    sel = sel.iloc[offset: (offset + limit) if limit else None]
+    print(f"positions {offset}..{offset + len(sel)} of {n_total} -> {out}")
+    state = {"last_ckpt": offset}
     use_hist = bool(cfg["maia"].get("use_uci_history", True)) and "hist_uci" in sel.columns
 
     rows = []
@@ -130,7 +147,14 @@ def main(cfg, model_name=None, device=None, batch_size=256, limit=0, fixed_elo=N
         buf_tok.clear(); buf_self.clear(); buf_oppo.clear()
         buf_board.clear(); buf_pos.clear()
 
-    for r in tqdm(sel.itertuples(), total=len(sel), desc=f"Maia-3 [{spec.display_name}]"):
+    def checkpoint(abs_end):
+        if rows:
+            pd.DataFrame(rows, columns=["pos_id", "move", "q"]).to_parquet(
+                part_name(state["last_ckpt"], abs_end), index=False)
+            rows.clear()
+        state["last_ckpt"] = abs_end
+
+    for i, r in enumerate(tqdm(sel.itertuples(), total=len(sel), desc=f"Maia-3 [{spec.display_name}]")):
         hist_uci = getattr(r, "hist_uci", "") if use_hist else ""
         tokens, board = tokens_for(r.fen, hist_uci or "", mcfg)
         if not any(board.legal_moves):
@@ -145,12 +169,18 @@ def main(cfg, model_name=None, device=None, batch_size=256, limit=0, fixed_elo=N
         buf_pos.append(r.pos_id)
         if len(buf_tok) >= batch_size:
             flush()
+            if (offset + i + 1) - state["last_ckpt"] >= checkpoint_every:
+                checkpoint(offset + i + 1)
     flush()
+    checkpoint(offset + len(sel))
 
-    df = pd.DataFrame(rows, columns=["pos_id", "move", "q"])
-    df.to_parquet(cfg["data"]["maia_q"], index=False)
+    parts = existing_parts()
+    df = pd.concat([pd.read_parquet(q) for q in parts], ignore_index=True)
+    df.to_parquet(out, index=False)
+    for q in parts:
+        os.remove(q)
     print(f"wrote {len(df)} (pos,move) rows over {df.pos_id.nunique()} positions "
-          f"-> {cfg['data']['maia_q']}")
+          f"-> {out} (assembled from {len(parts)} part file(s))")
 
 
 if __name__ == "__main__":
@@ -162,5 +192,10 @@ if __name__ == "__main__":
     ap.add_argument("--limit", type=int, default=0, help="cap #positions (0 = all)")
     ap.add_argument("--fixed-elo", type=int, default=None,
                     help="condition Maia on this ONE rating for every position (rating-blind prior)")
+    ap.add_argument("--offset", type=int, default=0, help="start at this position index")
+    ap.add_argument("--out", default=None, help="override cfg.data.maia_q output path")
+    ap.add_argument("--resume", action="store_true", help="continue from existing part files")
+    ap.add_argument("--checkpoint-every", type=int, default=50000, help="positions per part file")
     a = ap.parse_args()
-    main(yaml.safe_load(open(a.config)), a.model, a.device, a.batch_size, a.limit, a.fixed_elo)
+    main(yaml.safe_load(open(a.config)), a.model, a.device, a.batch_size, a.limit, a.fixed_elo,
+         a.offset, a.out, a.resume, a.checkpoint_every)

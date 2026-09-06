@@ -32,3 +32,6 @@ paper/cover_letter.*
 
 # local backup of the pre-audit bibliography
 paper/refs-old.bib
+
+# apacite auxiliary
+paper/*.spl

@@ -20,7 +20,9 @@ import torch
 import yaml
 from scipy.stats import spearmanr
 
-from .analyze import fit, dhat_over, player_split, band_of, BANDS
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # analyze.py uses bare `import figstyle`
+from analyze import fit, dhat_over, player_split, band_of, BANDS  # noqa: E402
 
 PAPER = {"classical": +0.40, "rapid": +0.66, "blitz": +0.45, "bullet": -0.04}  # reported E2
 

@@ -373,9 +373,25 @@ emergence depth $+0.14$, total swing $+0.23$; all $p<10^{-35}$), and the two kin
 apart: puzzles the pattern model solves even at its weakest setting have a mean human rating of
 $1{,}574$ and a mean critical depth of $2.3$, while those it fails at its strongest have a mean
 rating of $1{,}988$ and a critical depth of $3.2$. Deeper items are less findable by pattern at
-every simulated strength (Fig.~\ref{fig:puzzle}b; Spearman between critical depth and solve rate
+every simulated strength (Fig.~\ref{fig:puzzle}c; Spearman between critical depth and solve rate
 $-0.20$). What a pattern model cannot see, and what makes an item hard for people, is the part
 that only appears with depth.
+
+Both faces of swing are visible in what makes a puzzle hard. A solution is a \emph{deep
+discovery} (swing-up) when it looks worse at shallow depth than it proves to be; a
+\emph{trap} (swing-down) is a wrong move that looks better shallow than it is. Among the
+easiest puzzles (rated 800--1199) only 8\% have a deep-discovery solution; among the hardest
+(2400 and above) half do, and the solution's mean swing-up rises more than tenfold. At the
+same time the most tempting wrong move---the non-solution that looks best at shallow
+depth---becomes a deeper trap: its swing-down grows from $-1.9$ to $-4.5$, and its apparent
+edge over the solution at shallow depth closes from $-0.47$ to $-0.11$ in win probability, so
+that in the hardest puzzles a quick glance barely tells the trap from the solution
+(Fig.~\ref{fig:puzzle}b). The two faces carry different information. The solution's swing-up
+is largely what defeats the pattern model (Spearman with its solve rate $-0.33$) and adds
+little to human difficulty once pattern findability is controlled (partial $+0.09$); the
+trap's swing-down survives that control almost intact (partial $-0.23$; the trap's shallow
+edge, $+0.25$). What is hard to \emph{see} is a matter of pattern; what is hard to
+\emph{reject}---a tempting move whose flaw appears only at depth---is a matter of search.
 
 Two limits bound this test. Puzzles are announced---the solver is told a decisive move exists,
 which removes the problem of noticing that a position is critical---so this validates the item
@@ -388,7 +404,10 @@ by someone else.
 \caption{\textbf{Engine item difficulty against an independent human criterion.}
 $10{,}679$ rating-stratified Lichess puzzles. \textbf{a}, Mean human puzzle rating (Glicko,
 estimated by Lichess from rated solvers' attempts) by the item's engine critical depth; shaded
-band, bootstrap 95\% CI over puzzles; counts per depth shown. \textbf{b}, Person side: solve
+band, bootstrap 95\% CI over puzzles; counts per depth shown. \textbf{b}, The two faces of swing by human rating band: the share
+of puzzles whose solution is a deep discovery (swing-up; left axis, bootstrap 95\% CI) and the
+shallow advantage of the most tempting wrong move over the solution (right axis; less negative
+means the trap looks more like the solution at depth $\le4$). \textbf{c}, Person side: solve
 rate of Maia-3 simulated solvers across a ladder of ratings, by item critical depth. Solve rate
 rises with simulated skill at every depth, and deeper items sit lower at every strength---what
 pattern alone cannot find.}
@@ -680,7 +699,9 @@ position is the one shown to the solver---after the opponent's setup move---and 
 is the solver's first move; both are analysed by the identical engine pipeline, so item
 difficulty is computed exactly as in the item-response analysis. Simulated solvers are the
 Maia-3 policy evaluated at eight ratings from 1100 to 2500 on the same positions, scored by
-whether the solution is the model's top move. Regressions of puzzle rating use
+whether the solution is the model's top move. For the swing decomposition, a solution counts as
+a deep discovery if its swing exceeds $0.02$, and the trap is the non-solution candidate with
+the highest mean win probability at depths $\le4$. Regressions of puzzle rating use
 heteroskedasticity-robust standard errors; puzzles are independent items, so no clustering is
 applied.
 

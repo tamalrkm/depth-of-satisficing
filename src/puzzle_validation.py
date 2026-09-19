@@ -182,6 +182,38 @@ def analyse(out):
     print(f"\n  Spearman(crit_depth, Maia solve rate) = {r:+.3f} (p={p:.1e})  deeper items are less pattern-findable")
     d.to_parquet(os.path.join(out, "features_with_maia.parquet"))
 
+    # ---- the two faces of swing: deep-discovery solution vs shallow-attractive trap ----
+    dt = pd.read_parquet(os.path.join(out, "depth_traj.parquet")); rows = []
+    for pid, g in dt.groupby("pos_id"):
+        piv = g.pivot_table(index="move", columns="depth", values="winprob").ffill(axis=1)
+        depths = sorted(piv.columns)
+        if not depths or depths[-1] < 8: continue
+        D = depths[-1]; sol = g.loc[g.is_played, "move"]
+        if sol.empty or sol.iloc[0] not in piv.index or len(piv) < 2: continue
+        sol = sol.iloc[0]; delta = piv.max(0) - piv; sw = delta.sub(delta[D], axis=0).sum(1)
+        shallow = [dd for dd in depths if dd <= 4]
+        trap = piv.drop(sol)[shallow].mean(1).idxmax()          # best-looking wrong move, shallow
+        rows.append(dict(puzzle_id=pid, sw_sol=float(sw[sol]), deep_discovery=int(sw[sol] > 0.02),
+                         trap_sw=float(sw[trap]),
+                         trap_edge=float(piv.loc[trap, shallow].mean() - piv.loc[sol, shallow].mean())))
+    x = pd.DataFrame(rows).set_index("puzzle_id").join(
+        d[["rating", "solver_moves", "mate", "endgame", "maia_solve"]], how="inner")
+    x.to_parquet(os.path.join(out, "swing_decomposition.parquet"))
+    print(f"\n=== two faces of swing ({len(x)} puzzles) ===")
+    print("  band       deep-discovery share  solution swing-up  trap swing-down  trap shallow edge")
+    for b, g in x.groupby((x.rating // 400) * 400):
+        print(f"  {int(b)}-{int(b)+399}: {g.deep_discovery.mean():8.2f} {g.sw_sol.mean():+18.3f} "
+              f"{g.trap_sw.mean():+16.3f} {g.trap_edge.mean():+18.3f}")
+    zx = lambda c: ((x[c] - x[c].mean()) / (x[c].std() + 1e-12)).to_numpy(); yx = x.rating.to_numpy()
+    Cx = np.column_stack([np.ones(len(x)), zx("solver_moves"), x.mate.to_numpy(), x.endgame.to_numpy()])
+    Cx2 = np.column_stack([Cx, zx("maia_solve")])
+    rx = lambda v, Cm: v - Cm @ np.linalg.lstsq(Cm, v, rcond=None)[0]
+    print("  Spearman with rating: raw | partial(length+theme) | partial(+Maia)")
+    for c, lab in [("sw_sol", "solution swing-up"), ("trap_sw", "trap swing-down"), ("trap_edge", "trap shallow edge")]:
+        print(f"    {lab:20s} {spearmanr(x[c], yx).correlation:+.3f} | {spearmanr(rx(zx(c), Cx), rx(yx, Cx)).correlation:+.3f} "
+              f"| {spearmanr(rx(zx(c), Cx2), rx(yx, Cx2)).correlation:+.3f}")
+    print(f"  Spearman(solution swing-up, Maia solve rate) = {spearmanr(x.sw_sol, x.maia_solve).correlation:+.3f}")
+
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

@@ -25,7 +25,8 @@ def main():
     d = pd.read_parquet(f"{a.out}/features_with_maia.parquet")
     m = pd.read_parquet(f"{a.out}/maia_solvers.parquet")
     d["cd"] = d.crit_depth.clip(upper=5)
-    fig, ax = plt.subplots(1, 2, figsize=(9.4, 3.8), constrained_layout=True)
+    sw = pd.read_parquet(f"{a.out}/swing_decomposition.parquet")
+    fig, ax = plt.subplots(1, 3, figsize=(13.2, 3.8), constrained_layout=True)
 
     # (a) human difficulty vs engine critical depth
     xs, ms, los, his, ns = [], [], [], [], []
@@ -43,7 +44,25 @@ def main():
     ax[0].set_ylabel("human puzzle rating\n(Glicko from rated solvers)")
     figstyle.panel_label(ax[0], "a")
 
-    # (b) person side: Maia solver ladder by item depth
+    # (b) two faces of swing by human rating band
+    sw["band"] = (sw.rating // 200) * 200
+    bx, dd, dlo, dhi, te = [], [], [], [], []
+    for b, g in sw.groupby("band"):
+        mu, lo, hi = ci(g.deep_discovery.to_numpy().astype(float))
+        if np.isnan(mu): continue
+        bx.append(b + 100); dd.append(mu); dlo.append(lo); dhi.append(hi); te.append(g.trap_edge.mean())
+    ax[1].fill_between(bx, dlo, dhi, color=figstyle.ACCENT_LIGHT, alpha=0.5, lw=0, zorder=2)
+    ax[1].plot(bx, dd, "-o", color=figstyle.ACCENT, lw=2.2, ms=5, zorder=3, label="solution is a deep discovery\n(share of puzzles)")
+    ax2 = ax[1].twinx()
+    ax2.plot(bx, te, "-s", color=figstyle.TC_COLORS["blitz"], lw=2.0, ms=4.5, zorder=3, label="trap's shallow edge over solution\n(win prob., depth <= 4)")
+    ax2.axhline(0, color=figstyle.GRID, lw=1); ax2.set_ylabel("trap's shallow edge (win probability)", color=figstyle.TC_COLORS["blitz"])
+    ax2.tick_params(axis="y", colors=figstyle.TC_COLORS["blitz"]); ax2.grid(False)
+    ax[1].set_xlabel("human puzzle rating (200-point bands)"); ax[1].set_ylabel("share with a deep-discovery solution")
+    h1, l1 = ax[1].get_legend_handles_labels(); h2, l2 = ax2.get_legend_handles_labels()
+    ax[1].legend(h1 + h2, l1 + l2, frameon=False, fontsize=6.8, loc="upper left")
+    figstyle.panel_label(ax[1], "b")
+
+    # (c) person side: Maia solver ladder by item depth
     mm = m.merge(d[["cd"]], left_on="puzzle_id", right_index=True)
     grp = mm.groupby(["cd", "solver_rating"]).top1.mean().reset_index()
     ramp = figstyle.BAND_RAMP if hasattr(figstyle, "BAND_RAMP") else None
@@ -51,13 +70,13 @@ def main():
     for i, cd in enumerate(cds):
         g = grp[grp.cd == cd].sort_values("solver_rating")
         col = ramp[int(i * (len(ramp) - 1) / max(len(cds) - 1, 1))] if ramp else None
-        ax[1].plot(g.solver_rating, g.top1, "-o", ms=4, lw=2.0, color=col, zorder=3,
+        ax[2].plot(g.solver_rating, g.top1, "-o", ms=4, lw=2.0, color=col, zorder=3,
                    label=f"{int(cd)}" + ("+" if cd == 5 else ""))
-    ax[1].set_xlabel("simulated solver rating (Maia-3)")
-    ax[1].set_ylabel("solve rate (solution is top move)")
-    ax[1].legend(frameon=False, fontsize=7, title="item critical depth", title_fontsize=7,
+    ax[2].set_xlabel("simulated solver rating (Maia-3)")
+    ax[2].set_ylabel("solve rate (solution is top move)")
+    ax[2].legend(frameon=False, fontsize=7, title="item critical depth", title_fontsize=7,
                  loc="lower right", ncol=2)
-    figstyle.panel_label(ax[1], "b")
+    figstyle.panel_label(ax[2], "c")
     figstyle.save(fig, "paper/figs/fig_puzzle_validation.png")
     print("wrote paper/figs/fig_puzzle_validation.png")
 

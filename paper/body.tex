@@ -577,7 +577,9 @@ game is analysed and the sample is not conditioned on position difficulty or on 
 the move played.
 
 \paragraph{Engine analysis and value scaling.}
-Positions are analysed with Stockfish~18 in multi-PV mode, recording each candidate move
+Positions are analysed with Stockfish (development build \texttt{dev-20260527-313ea4ab},
+evaluation network \texttt{nn-71d6d32cb962.nnue}; we name the exact build because the
+measurement is defined relative to one engine's search) in multi-PV mode, recording each candidate move
 $m_i$'s evaluation at every depth $d=1\ldots D$ ($D{=}21$, $K{=}9$). The candidate set is the
 union of the top-$K$ across all depths, so trap moves keep a full trajectory. Because
 consecutive plies of each game are analysed, the value of a played move falling outside the
@@ -736,7 +738,8 @@ registrations and is disclosed here rather than corrected in them.
 
 \paragraph{Reproducibility.}
 % >>> REV-COAUTHOR (Jul 2026): python-chess credited as UCI bridge + board representation. <<<
-Stockfish~18 (shared NNUE), Threads~1 per process across many single-thread engines, Hash
+Stockfish \texttt{dev-20260527-313ea4ab} with network \texttt{nn-71d6d32cb962.nnue}
+(shared NNUE), Threads~1 per process across many single-thread engines, Hash
 256\,MB, $D{=}21$, $K{=}9$, $2\times10^{8}$-node cap, driven through the \texttt{python-chess}
 UCI bridge (v1.11), which also provides all board and move representation; Maia-3
 (\texttt{maia3-79m}) \citep{monroe2026}; depth grid
@@ -775,7 +778,7 @@ and all figure code) and configuration files are openly available under the MIT 
 \url{https://github.com/tamalrkm/depth-of-satisficing}. The pre-registrations are archived in
 the same OSF project (registrations
 \href{https://doi.org/10.17605/OSF.IO/KB4ZQ}{10.17605/OSF.IO/KB4ZQ} and
-\href{https://doi.org/10.17605/OSF.IO/A6NYK}{10.17605/OSF.IO/A6NYK}). Stockfish~18 and Maia-3
+\href{https://doi.org/10.17605/OSF.IO/A6NYK}{10.17605/OSF.IO/A6NYK}). Stockfish and Maia-3
 are third-party open-source software.
 
 \paragraph{Acknowledgements.}

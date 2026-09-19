@@ -46,8 +46,11 @@ def sample(out, per_band, seed=17):
         picks.append(g.iloc[rng.choice(len(g), n, replace=False)])
     s = pd.concat(picks, ignore_index=True)
     # the position shown to the solver is AFTER the opponent's first move; solution is the next
-    pos = [(lambda b, mv: (b.push_uci(mv[0]) or b.fen(), mv[1]))(chess.Board(f), m.split())
-           for f, m in zip(s.fen, s.moves)]
+    def shown(fen, moves):
+        b = chess.Board(fen); mv = moves.split()
+        b.push_uci(mv[0])                      # NB: push_uci returns a Move, not None
+        return b.fen(), mv[1]
+    pos = [shown(f, m) for f, m in zip(s.fen, s.moves)]
     s["pos_fen"] = [a for a, _ in pos]; s["solution"] = [b for _, b in pos]
     pd.DataFrame({"pos_id": s.puzzle_id, "fen": s.pos_fen, "played_uci": s.solution}) \
         .to_parquet(f"{out}/selected.parquet", index=False)

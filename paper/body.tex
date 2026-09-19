@@ -88,7 +88,10 @@ under estimators given no rating information---and we report where it fails. Thi
 subjected the construct to an adversarial replication programme: hypotheses, pipeline, and
 decision rules were pre-registered and then confirmed on untouched months of data, ending
 with a fully prospective test registered before its data existed \citep{nosek2018}. The
-final, registered confirmation succeeded on all three primary hypotheses.
+final, registered confirmation succeeded on all three primary hypotheses as registered. A
+later audit, reported in full, found that two of the three, as operationalised, had tested
+the model's learned prior rather than the move evidence; we show which claims survive a
+rating-blind re-test and which we withdraw.
 
 \section{Results}
 
@@ -185,9 +188,9 @@ provided one looks within a time control: posterior depth rises with rating in c
 (Spearman $\rho=+0.40$), rapid ($+0.66$) and blitz ($+0.45$), and is flat in bullet ($-0.04$).
 That statistic, however, is the model's own \emph{learned prior} being read back. The prior
 $\pi_d(c)$ is conditioned on rating, and the correlation of rating with the prior's mean depth
-($+0.40$, $+0.67$, $+0.46$, $-0.04$) matches the posterior's to two decimals, while the
+($+0.40$, $+0.67$, $+0.46$, $-0.04$) agrees with the posterior's to within $0.01$, while the
 correlation of rating with the \emph{update} the played move contributes---posterior minus
-prior---is $+0.01$ in every control. A single move says very little about depth. Whether the
+prior---is at most $+0.01$ in any control. A single move says very little about depth. Whether the
 learned prior is itself supported by the data is a held-out likelihood question, and the
 answer is: only in slow play. Allowing the depth prior to depend on rating improves held-out
 move prediction in classical ($+0.0020$ nats; player-clustered 95\% CI $[+0.0018,+0.0022]$),
@@ -347,13 +350,14 @@ snapshot of 2026-09-09, and ran each through the identical engine pipeline (Meth
 
 Human difficulty tracks the engine's depth structure. The item's critical depth---the deepest
 ply at which the apparent-best move still differs from the full-depth best, the same $b_j$ used
-above---correlates with the puzzle's human rating at Spearman $+0.24$, the depth from which the
+above, read here on every engine ply rather than the even-ply grid---correlates with the
+puzzle's human rating at Spearman $+0.24$, the depth from which the
 solution becomes and stays best at $+0.26$, and the position's total swing at $+0.42$
 ($n=10{,}679$). Puzzle difficulty has two trivial determinants---how many moves the solver must
 find, and whether the puzzle is a mate---and the relationship survives both: controlling for
 solution length and for mate and endgame themes, the partial correlations are $+0.17$, $+0.20$
 and $+0.26$ (all $p<10^{-35}$), and adding the depth features to a regression of rating on those
-controls raises $R^2$ from $0.293$ to $0.330$. Mean human rating climbs from $1{,}598$ at
+controls raises $R^2$ from $0.293$ to $0.330$. Mean human rating climbs from $1{,}599$ at
 critical depth 1 to $1{,}897$ at depth 4 (Fig.~\ref{fig:puzzle}a); the relationship is clearest
 between items whose apparent-best move never changes with depth and those where it does, and
 noisier among the deepest items.
@@ -365,7 +369,7 @@ strength, from $0.60$ at 1100 to $0.77$ at 2500, and tracks human difficulty acr
 (Spearman $-0.38$): much of what makes a puzzle hard is that its solution is hard to see by
 pattern. But not all of it. Controlling for solution length, theme \emph{and} the pattern
 model's solve rate, engine depth still predicts human difficulty (critical depth $+0.12$,
-emergence depth $+0.14$, total swing $+0.24$; all $p<10^{-35}$), and the two kinds of item come
+emergence depth $+0.14$, total swing $+0.23$; all $p<10^{-35}$), and the two kinds of item come
 apart: puzzles the pattern model solves even at its weakest setting have a mean human rating of
 $1{,}574$ and a mean critical depth of $2.3$, while those it fails at its strongest have a mean
 rating of $1{,}988$ and a critical depth of $3.2$. Deeper items are less findable by pattern at
@@ -456,7 +460,8 @@ reproduced the registered rating relationship (classical $\rho=+0.47$, rapid $+0
 clock-free correlation ($+0.40$), and the interaction ($+0.076$ nats, $p<10^{-48}$).
 
 The prospective month then arrived and was processed once. All three primary hypotheses
-replicated, satisfying the registered decision rule. On 203{,}248 decisions from 3{,}707
+replicated as registered, satisfying the decision rule; how two of them must now be read is
+set out at the end of this section. On 203{,}248 decisions from 3{,}707
 players: depth rose with rating within every slow control (classical $\rho=+0.23$, 95\% CI
 $[+0.15,+0.35]$; rapid $+0.72$ $[+0.59,+0.79]$) with bullet null as predicted ($+0.08$
 $[-0.03,+0.19]$); the registered clock-free correlation with thinking time held ($\rho=+0.32$,
@@ -725,7 +730,9 @@ the data). Each month was processed exactly once by the frozen pipeline. Deviati
 disclosed in Results: the first registration's blitz prediction was too strong and its
 swing-direction convention reversed; the second registration's blitz-null prediction proved
 too weak in turn (blitz positive in the prospective month). Neither deviation touches the
-primary hypotheses.
+primary hypotheses. A subsequent audit of the estimators (Results) found that two registered
+primary statistics, as operationalised, tested the learned prior; that finding post-dates both
+registrations and is disclosed here rather than corrected in them.
 
 \paragraph{Reproducibility.}
 % >>> REV-COAUTHOR (Jul 2026): python-chess credited as UCI bridge + board representation. <<<
@@ -752,11 +759,13 @@ not required for the same reason.
 
 \paragraph{Data availability.}
 All game records derive from public sources: the Lichess open database
-(\url{https://database.lichess.org}; months 2025-09, 2026-04, 2026-05, 2026-06), openly
+(\url{https://database.lichess.org}; months 2025-09, 2026-04, 2026-05, 2026-06), the Lichess
+puzzle database (same site; snapshot of 2026-09-09), openly
 licensed Lichess broadcast exports of over-the-board play, and public games retrieved via the
 chess.com Published-Data API (\url{https://api.chess.com}). The derived analysis
 datasets---per-position engine depth trajectories, Maia-3 policies, and the model tensors
-behind every result, for the primary month and all three replication months---are deposited
+behind every result, for the primary month and all three replication months, together with the
+puzzle sample, its engine trajectories, and the simulated-solver table---are deposited
 in the study's Open Science Framework project (\url{https://osf.io/ruhy8}) under a CC-BY
 licence; the deposit DOI will be minted on publication.
 

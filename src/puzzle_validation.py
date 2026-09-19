@@ -134,6 +134,54 @@ def analyse(out):
     for c in FEATS:
         r, p = spearmanr(nm[c], nm.rating); print(f"  {c:13s} rho={r:+.3f}  p={p:.1e}")
 
+    # ---- person side: Maia-3 simulated solvers, if src.puzzle_maia_solvers has been run ----
+    ms = os.path.join(out, "maia_solvers.parquet")
+    if not os.path.exists(ms):
+        return
+    m = pd.read_parquet(ms)
+    w = m.pivot_table(index="puzzle_id", columns="solver_rating", values="top1")
+    lo, hi = w.columns.min(), w.columns.max()
+    per = pd.DataFrame({"maia_solve": w.mean(1), "maia_grad": w[hi] - w[lo],
+                        "maia_lo": w[lo], "maia_hi": w[hi]})
+    d = f.join(per, how="inner").dropna(subset=["maia_solve"])
+    print(f"\n=== person side: {len(d)} puzzles x {w.shape[1]} simulated solver ratings ===")
+    print("Maia (pattern, no search) as a proxy solver, vs the human puzzle rating:")
+    for c, lab in [("maia_solve", "mean solve rate"), ("maia_grad", "solve-rate gradient lo->hi")]:
+        r, p = spearmanr(d[c], d.rating); print(f"  {lab:28s} rho={r:+.3f}  p={p:.1e}")
+    zz = lambda c: ((d[c] - d[c].mean()) / (d[c].std() + 1e-12)).to_numpy()
+    yy = d.rating.to_numpy()
+    def ols2(X, names):
+        X = np.column_stack([np.ones(len(yy))] + list(X))
+        b = np.linalg.lstsq(X, yy, rcond=None)[0]; r = yy - X @ b
+        XtXi = np.linalg.inv(X.T @ X); Xu = X * r[:, None]
+        se = np.sqrt(np.diag(XtXi @ (Xu.T @ Xu) @ XtXi))
+        print(f"   R2={1 - r.var() / yy.var():.3f}")
+        for n, bi, si in zip(names, b[1:], se[1:]):
+            print(f"     {n:14s} {bi:+8.1f}  (SE {si:.1f}, z={bi / si:+.1f})")
+    print("\nDoes DEPTH add beyond PATTERN?  OLS human puzzle rating ~ ... (HC1 SE)")
+    print("  controls + Maia pattern findability:")
+    ols2([zz("solver_moves"), d.mate, d.endgame, zz("maia_solve")],
+         ["solver_moves", "mate", "endgame", "maia_solve"])
+    print("  + engine depth:")
+    ols2([zz("solver_moves"), d.mate, d.endgame, zz("maia_solve"), zz("crit_depth"), zz("emerge_depth")],
+         ["solver_moves", "mate", "endgame", "maia_solve", "crit_depth", "emerge_depth"])
+    C2 = np.column_stack([np.ones(len(d)), zz("solver_moves"), d.mate.to_numpy(),
+                          d.endgame.to_numpy(), zz("maia_solve")])
+    res2 = lambda v: v - C2 @ np.linalg.lstsq(C2, v, rcond=None)[0]
+    print("\n  partial Spearman with rating, controlling length + theme + Maia pattern findability:")
+    for c in FEATS:
+        r, p = spearmanr(res2(zz(c)), res2(yy)); print(f"    {c:13s} rho={r:+.3f}  p={p:.1e}")
+    print("\npattern-findable vs search-required items:")
+    for lab, g in [("pattern-findable (Maia solves at lowest rating)", d[d.maia_lo == 1]),
+                   ("mixed (only stronger Maia solves)", d[(d.maia_lo == 0) & (d.maia_hi == 1)]),
+                   ("search-required (Maia fails at highest rating)", d[d.maia_hi == 0])]:
+        if len(g) < 30: continue
+        print(f"  {lab:46s} n={len(g):5d}  human rating {g.rating.mean():6.0f}  "
+              f"crit_depth {g.crit_depth.mean():.2f}  emerge {g.emerge_depth.mean():.2f}")
+    r, p = spearmanr(d.crit_depth, d.maia_solve)
+    print(f"\n  Spearman(crit_depth, Maia solve rate) = {r:+.3f} (p={p:.1e})  deeper items are less pattern-findable")
+    d.to_parquet(os.path.join(out, "features_with_maia.parquet"))
+
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

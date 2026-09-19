@@ -332,6 +332,64 @@ severity category versus ability; P(best) rises and P(blunder) falls monotonical
 the depth of satisficing measures person ability.}
 \label{fig:irt}\end{figure}
 
+% >>> REV (Sep 2026): external validation of the item side against a human criterion that is
+% wholly independent of our pipeline (Lichess puzzle ratings), with a pattern-model control
+% (Maia-3 simulated solvers). Replaces the convergent evidence lost when the think-time claim
+% was withdrawn. Code: src/puzzle_validation.py, src/puzzle_maia_solvers.py. <<<
+\paragraph{Engine-derived item difficulty predicts human difficulty.}
+The item-response reading above is internal: difficulty and ability are both estimated from
+our own pipeline. An independent criterion exists. The Lichess puzzle database assigns each
+puzzle a rating on the Glicko scale, estimated from the successes and failures of rated
+solvers and computed without reference to any engine-depth analysis. We drew a
+rating-stratified sample of $10{,}800$ well-calibrated puzzles (at least 500 attempts,
+rating deviation $\le80$; $1{,}200$ per 200-point band from 800 to 2600) from the database
+snapshot of 2026-09-09, and ran each through the identical engine pipeline (Methods).
+
+Human difficulty tracks the engine's depth structure. The item's critical depth---the deepest
+ply at which the apparent-best move still differs from the full-depth best, the same $b_j$ used
+above---correlates with the puzzle's human rating at Spearman $+0.24$, the depth from which the
+solution becomes and stays best at $+0.26$, and the position's total swing at $+0.42$
+($n=10{,}679$). Puzzle difficulty has two trivial determinants---how many moves the solver must
+find, and whether the puzzle is a mate---and the relationship survives both: controlling for
+solution length and for mate and endgame themes, the partial correlations are $+0.17$, $+0.20$
+and $+0.26$ (all $p<10^{-35}$), and adding the depth features to a regression of rating on those
+controls raises $R^2$ from $0.293$ to $0.330$. Mean human rating climbs from $1{,}598$ at
+critical depth 1 to $1{,}897$ at depth 4 (Fig.~\ref{fig:puzzle}a); the relationship is clearest
+between items whose apparent-best move never changes with depth and those where it does, and
+noisier among the deepest items.
+
+A pattern model supplies the person side and a sharper test. Maia-3's policy is conditioned on
+a rating, so running a puzzle through it at a ladder of ratings yields simulated solvers of
+graded skill, which search not at all. Their solve rate rises monotonically with simulated
+strength, from $0.60$ at 1100 to $0.77$ at 2500, and tracks human difficulty across items
+(Spearman $-0.38$): much of what makes a puzzle hard is that its solution is hard to see by
+pattern. But not all of it. Controlling for solution length, theme \emph{and} the pattern
+model's solve rate, engine depth still predicts human difficulty (critical depth $+0.12$,
+emergence depth $+0.14$, total swing $+0.24$; all $p<10^{-35}$), and the two kinds of item come
+apart: puzzles the pattern model solves even at its weakest setting have a mean human rating of
+$1{,}574$ and a mean critical depth of $2.3$, while those it fails at its strongest have a mean
+rating of $1{,}988$ and a critical depth of $3.2$. Deeper items are less findable by pattern at
+every simulated strength (Fig.~\ref{fig:puzzle}b; Spearman between critical depth and solve rate
+$-0.20$). What a pattern model cannot see, and what makes an item hard for people, is the part
+that only appears with depth.
+
+Two limits bound this test. Puzzles are announced---the solver is told a decisive move exists,
+which removes the problem of noticing that a position is critical---so this validates the item
+side of the measurement, not the person side in natural play. And puzzles are curated towards a
+unique tactical solution, so they are not a representative sample of positions. What they
+provide is what the construct otherwise lacks: an item difficulty measured on people, at scale,
+by someone else.
+
+\begin{figure}[t]\centering\includegraphics[width=0.92\linewidth]{figs/fig_puzzle_validation.png}
+\caption{\textbf{Engine item difficulty against an independent human criterion.}
+$10{,}679$ rating-stratified Lichess puzzles. \textbf{a}, Mean human puzzle rating (Glicko,
+estimated by Lichess from rated solvers' attempts) by the item's engine critical depth; shaded
+band, bootstrap 95\% CI over puzzles; counts per depth shown. \textbf{b}, Person side: solve
+rate of Maia-3 simulated solvers across a ladder of ratings, by item critical depth. Solve rate
+rises with simulated skill at every depth, and deeper items sit lower at every strength---what
+pattern alone cannot find.}
+\label{fig:puzzle}\end{figure}
+
 \paragraph{Profiles, not a single number, separate expert styles.}
 Averaged per player from an \emph{elo-free} refit (so that recovering rating is not
 circular), three behavioural axes---depth of satisficing, trap susceptibility, and
@@ -606,6 +664,18 @@ than free parameters because most natural positions occur exactly once. The MLE 
 subsample; response curves are computed on all decisions. Per-player ability has low
 split-half reliability at this decision density, so effects are reported at the item and
 rating-band level.
+
+\paragraph{Puzzle validation.}
+Puzzles come from the Lichess puzzle database (snapshot 2026-09-09; $6{,}100{,}952$ puzzles),
+restricted to well-calibrated items (at least 500 recorded attempts, rating deviation
+$\le80$) and sampled at $1{,}200$ per 200-point rating band from 800 to 2600. A puzzle's
+position is the one shown to the solver---after the opponent's setup move---and its solution
+is the solver's first move; both are analysed by the identical engine pipeline, so item
+difficulty is computed exactly as in the item-response analysis. Simulated solvers are the
+Maia-3 policy evaluated at eight ratings from 1100 to 2500 on the same positions, scored by
+whether the solution is the model's top move. Regressions of puzzle rating use
+heteroskedasticity-robust standard errors; puzzles are independent items, so no clustering is
+applied.
 
 \paragraph{Profiles and rating recovery.}
 Per player with at least 100 decisions: mean $\hat d$; trap susceptibility (rate of played
